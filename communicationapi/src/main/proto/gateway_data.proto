@@ -1,0 +1,34 @@
+syntax = "proto3";
+
+package com.digirise.api;
+
+//option java_package = "com.example.tutorial";
+option java_outer_classname = "GatewayDataProtos";
+
+enum DeviceType {
+    TEMPERATURE_SENSOR = 0;
+    MOTION_SENSOR = 1;
+    HUMIDITY_SENSOR = 2;
+}
+
+enum ReadingType {
+    SENSOR_CURRENT_VALUE = 0;
+    SENSOR_OTHER_VALUE = 1;
+}
+
+message DeviceReadings {
+    ReadingType readingType = 1;
+    string value = 2;
+}
+
+message DeviceData {
+    string deviceId = 1;
+    DeviceType deviceType = 2;
+    repeated DeviceReadings allReadingsFromDevice = 3;
+    string timestamp = 4;
+}
+
+message DevicesReadingsFromGateway {
+    string gatewayTimestamp = 1;
+    repeated DeviceData deviceData = 2;
+}
