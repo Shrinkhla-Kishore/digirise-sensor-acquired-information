@@ -60,7 +60,7 @@ public class Publisher {
             s_logger.info("Inside step 1");
             while (!mqttClient.isConnected()){
                 try {
-                    Thread.currentThread().sleep(2000);
+                    Thread.currentThread().sleep(5000);
                     mqttClient.connect();
                     s_logger.info("Mqtt client connected to {}", mqttBroker);
                 } catch (MqttException e) {
@@ -84,33 +84,55 @@ public class Publisher {
     public void sendData(String mqttBroker) throws MqttException, IOException {
         s_logger.info("Inside sendData");
         if (mqttClient.isConnected()) {
-            UUID uuid = UUID.randomUUID();
-            String alarm_topic = PREFIX_TOPIC + gatewayId + SUFFIX_TOPIC + uuid;
+            if (checkIfDataToSend()) {
+                UUID uuid = UUID.randomUUID();
+                String alarm_topic = PREFIX_TOPIC + gatewayId + SUFFIX_TOPIC + uuid;
 
-            List<DeviceData> fakeDevicesData = new ArrayList<>();
-            //TO-DO: Handle real sensor data
-            fakeDevicesData.add(createDeviceData());
-            GatewayDataProtos.DevicesReadingsFromGateway gatewayReadings = devicesReadingsFromGatewaySerializer.serializeDevicesData(fakeDevicesData);
-            ByteArrayOutputStream byteOutputStream = new ByteArrayOutputStream();
-            ObjectOutputStream os = new ObjectOutputStream(byteOutputStream);
-            os.writeObject(gatewayReadings);
+//                List<DeviceData> fakeDevicesData = new ArrayList<>();
+//                //TO-DO: Handle real sensor data
+//                fakeDevicesData.add(createDeviceData());
+//                GatewayDataProtos.DevicesReadingsFromGateway gatewayReadings = devicesReadingsFromGatewaySerializer.serializeDevicesData(fakeDevicesData);
+//                ByteArrayOutputStream byteOutputStream = new ByteArrayOutputStream();
+//                ObjectOutputStream os = new ObjectOutputStream(byteOutputStream);
+//                os.writeObject(gatewayReadings);
+                ByteArrayOutputStream byteArrayOutputStream = prepareDataToSend();
 
-            s_logger.info("ClientId {} publishing data on topic {}",
-                    mqttClient.getClientId(), alarm_topic);
+                s_logger.info("ClientId {} publishing data on topic {}",
+                        mqttClient.getClientId(), alarm_topic);
 //            MqttMessage mqttMessage = new MqttMessage(Integer.toString(alarmId.get()).getBytes());
-            MqttMessage mqttMessage = new MqttMessage(byteOutputStream.toByteArray());
+                MqttMessage mqttMessage = new MqttMessage(byteArrayOutputStream.toByteArray());
 
 
-            mqttMessage.setQos(1);
-            mqttMessage.setId(alarmId.get());
-            mqttClient.publish(alarm_topic, mqttMessage);
+                mqttMessage.setQos(1);
+                mqttMessage.setId(alarmId.get());
+                mqttClient.publish(alarm_topic, mqttMessage);
+            } else {
+                s_logger.debug("No data to send from the connected devices");
+            }
         } else {
             s_logger.warn("Mqtt gateway with Id {} not connected", gatewayId);
             startPublisher(mqttBroker, gatewayId);
         }
     }
 
+    private boolean checkIfDataToSend() {
+        //TODO: Implement code to check if there is data to send
+        return true;
+    }
+
+    private ByteArrayOutputStream prepareDataToSend() throws IOException {
+        List<DeviceData> fakeDevicesData = new ArrayList<>();
+        //TO-DO: Handle real sensor data
+        fakeDevicesData.add(createDeviceData());
+        GatewayDataProtos.DevicesReadingsFromGateway gatewayReadings = devicesReadingsFromGatewaySerializer.serializeDevicesData(fakeDevicesData);
+        ByteArrayOutputStream byteOutputStream = new ByteArrayOutputStream();
+        ObjectOutputStream os = new ObjectOutputStream(byteOutputStream);
+        os.writeObject(gatewayReadings);
+        return byteOutputStream;
+    }
+
     private DeviceData createDeviceData() {
+        //TODO: TO be removed. Fake data
         DeviceData deviceData = new DeviceData();
         deviceData.setDeviceId(Integer.toString(alarmId.getAndIncrement()));
         deviceData.setDeviceType(GatewayDataProtos.DeviceType.TEMPERATURE_SENSOR);

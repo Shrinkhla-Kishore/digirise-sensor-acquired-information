@@ -6,7 +6,13 @@
 
     <groupId>com.digirise.sai</groupId>
     <artifactId>communication-api</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>0.0.1-SNAPSHOT</version>
+
+    <parent>
+        <groupId>com.digirise.sai</groupId>
+        <artifactId>sai-iot</artifactId>
+        <version>0.0.1-SNAPSHOT</version>
+    </parent>
 
     <properties>
         <!-- protobuf paths -->

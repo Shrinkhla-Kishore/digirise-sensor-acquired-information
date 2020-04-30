@@ -17,6 +17,6 @@ public class MqttHandler {
     public MqttHandler(FirmwareDispatcher firmwareDispatcher, @org.jetbrains.annotations.NotNull Subscriber subscriber) {
         subscriber.configureSubscriber();
         executor = new ScheduledThreadPoolExecutor(1);
-     //   ((ScheduledThreadPoolExecutor) executor).scheduleWithFixedDelay(subscriber, 2000, 1, TimeUnit.MILLISECONDS);
+       ((ScheduledThreadPoolExecutor) executor).scheduleWithFixedDelay(subscriber, 2000, 5000, TimeUnit.MILLISECONDS);
     }
 }
