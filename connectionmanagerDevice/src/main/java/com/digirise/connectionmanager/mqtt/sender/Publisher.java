@@ -47,10 +47,6 @@ public class Publisher {
         alarmId = new AtomicInteger(40);
     }
 
-//    public Publisher(String gatewayId) {
-//        this.gatewayId = gatewayId;
-//    }
-
     public void startPublisher(String mqttBroker, String gatewayId) {
         try {
             this.gatewayId = gatewayId;
@@ -88,19 +84,18 @@ public class Publisher {
                 UUID uuid = UUID.randomUUID();
                 String alarm_topic = PREFIX_TOPIC + gatewayId + SUFFIX_TOPIC + uuid;
 
-//                List<DeviceData> fakeDevicesData = new ArrayList<>();
-//                //TO-DO: Handle real sensor data
-//                fakeDevicesData.add(createDeviceData());
-//                GatewayDataProtos.DevicesReadingsFromGateway gatewayReadings = devicesReadingsFromGatewaySerializer.serializeDevicesData(fakeDevicesData);
-//                ByteArrayOutputStream byteOutputStream = new ByteArrayOutputStream();
-//                ObjectOutputStream os = new ObjectOutputStream(byteOutputStream);
-//                os.writeObject(gatewayReadings);
-                ByteArrayOutputStream byteArrayOutputStream = prepareDataToSend();
+                List<DeviceData> fakeDevicesData = new ArrayList<>();
+                //TO-DO: Handle real sensor data
+                fakeDevicesData.add(createDeviceData());
+                GatewayDataProtos.DevicesReadingsFromGateway gatewayReadings = devicesReadingsFromGatewaySerializer.serializeDevicesData(fakeDevicesData);
+                ByteArrayOutputStream byteOutputStream = new ByteArrayOutputStream();
+                ObjectOutputStream os = new ObjectOutputStream(byteOutputStream);
+                os.writeObject(gatewayReadings);
+             //   ByteArrayOutputStream byteArrayOutputStream = prepareDataToSend();
 
                 s_logger.info("ClientId {} publishing data on topic {}",
                         mqttClient.getClientId(), alarm_topic);
-//            MqttMessage mqttMessage = new MqttMessage(Integer.toString(alarmId.get()).getBytes());
-                MqttMessage mqttMessage = new MqttMessage(byteArrayOutputStream.toByteArray());
+                MqttMessage mqttMessage = new MqttMessage(byteOutputStream.toByteArray());
 
 
                 mqttMessage.setQos(1);
@@ -175,12 +170,4 @@ public class Publisher {
             e.printStackTrace();
         }
     }
-
-//    public String getGatewayId() {
-//        return gatewayId;
-//    }
-//
-//    public MqttClient getMqttClient() {
-//        return mqttClient;
-//    }
 }

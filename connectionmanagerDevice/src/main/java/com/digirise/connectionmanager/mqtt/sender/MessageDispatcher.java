@@ -1,44 +1,34 @@
 package com.digirise.connectionmanager.mqtt.sender;
 
 import org.eclipse.paho.client.mqttv3.MqttException;
-import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.PropertySource;
-import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Component
 @PropertySource("classpath:application.properties")
-public class MessageDispatcher /*implements Runnable */{
+public class MessageDispatcher {
     private static final Logger s_logger = LoggerFactory.getLogger(MessageDispatcher.class);
     @Value("${mqtt.broker}")
     public String mqttBroker;
     @Autowired
     private Publisher publisher;
-//    @Autowired
-//    private Environment environment;
 
     private AtomicInteger clientId;
     private List<Publisher> publishersList;
 
-    public MessageDispatcher() {
-        s_logger.info("Inside messageDispatcher constructor. Mqtt broker is {}", mqttBroker);
-        clientId = new AtomicInteger(1);
-        publishersList = new ArrayList<>();
-    }
-
     public void configureMessageDisptacher() {
         s_logger.info("Inside configureMessageDisptacher, Mqtt broker is {}", mqttBroker);
+        clientId = new AtomicInteger(1);
+        publishersList = new ArrayList<>();
         for (int i=1; i<=1; i++) {
             String cltId = String.valueOf(this.clientId.getAndIncrement());
             //Publisher publisher = new Publisher(cltId);
