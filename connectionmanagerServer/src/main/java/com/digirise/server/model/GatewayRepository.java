@@ -1,4 +1,4 @@
-package com.digirise.connectionmanager.model;
+package com.digirise.server.model;
 
 import org.springframework.data.repository.CrudRepository;
 

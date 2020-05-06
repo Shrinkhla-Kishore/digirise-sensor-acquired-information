@@ -19,7 +19,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
 
-    &lt;!&ndash;<property name="DEV_HOME" value="c:/Users/u4015811/IdeaProjects/connectionmanager" />&ndash;&gt;
+    &lt;!&ndash;<property name="DEV_HOME" value="c:/Users/u4015811/IdeaProjects/server" />&ndash;&gt;
     <property name="LOGS" value="./logs" />
 
     <appender name="FILE-AUDIT"

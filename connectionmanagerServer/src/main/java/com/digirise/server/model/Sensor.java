@@ -1,4 +1,4 @@
-package com.digirise.connectionmanager.model;
+package com.digirise.server.model;
 
 import javax.persistence.*;
 
@@ -16,8 +16,8 @@ public class Sensor {
     private String type;
     private String location;
     @ManyToOne
-    @JoinColumn(name = "gatewayId", nullable = false)
-    private Gateway gatewayId;
+    @JoinColumn(name = "gateway", nullable = false)
+    private Gateway gateway;
 
     public long getSensorId() {
         return sensorId;
@@ -43,11 +43,11 @@ public class Sensor {
         this.location = location;
     }
 
-    public Gateway getGatewayId() {
-        return gatewayId;
+    public Gateway getGateway() {
+        return gateway;
     }
 
-    public void setGatewayId(Gateway gatewayId) {
-        this.gatewayId = gatewayId;
+    public void setGateway(Gateway gateway) {
+        this.gateway = gateway;
     }
 }

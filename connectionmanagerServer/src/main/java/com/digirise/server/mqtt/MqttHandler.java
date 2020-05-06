@@ -1,10 +1,9 @@
-package com.digirise.connectionmanager.mqtt;
+package com.digirise.server.mqtt;
 
-import com.digirise.connectionmanager.mqtt.receiver.Subscriber;
-import com.digirise.connectionmanager.mqtt.sender.FirmwareDispatcher;
+import com.digirise.server.mqtt.receiver.Subscriber;
+import com.digirise.server.mqtt.sender.FirmwareDispatcher;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.PostConstruct;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;

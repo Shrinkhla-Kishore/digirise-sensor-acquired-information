@@ -1,4 +1,4 @@
-package com.digirise.connectionmanager;
+package com.digirise.server;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -9,7 +9,7 @@ import org.springframework.context.annotation.Configuration;
 
 @SpringBootApplication
 @Configuration
-@ComponentScan("com.digirise.connectionmanager")
+@ComponentScan("com.digirise.server")
 public class Application {
     private static final Logger s_logger = LoggerFactory.getLogger(Application.class);
     public static void main(String[] args) {

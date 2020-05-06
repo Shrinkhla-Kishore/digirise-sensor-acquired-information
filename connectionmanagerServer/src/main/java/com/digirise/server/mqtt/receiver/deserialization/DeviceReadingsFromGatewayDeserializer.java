@@ -1,4 +1,4 @@
-package com.digirise.connectionmanager.mqtt.receiver.deserialization;
+package com.digirise.server.mqtt.receiver.deserialization;
 
 import com.digirise.api.GatewayDataProtos;
 import com.digirise.sai.commons.dataobjects.DeviceData;

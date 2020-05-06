@@ -1,4 +1,4 @@
-//package com.getinge.connectionmanager.mqtt.sender;
+//package com.getinge.server.mqtt.sender;
 //
 //import org.eclipse.paho.client.mqttv3.MqttClient;
 //import org.eclipse.paho.client.mqttv3.MqttConnectOptions;

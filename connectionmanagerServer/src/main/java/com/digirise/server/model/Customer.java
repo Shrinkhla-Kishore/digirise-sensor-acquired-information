@@ -1,4 +1,4 @@
-package com.digirise.connectionmanager.model;
+package com.digirise.server.model;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
@@ -13,16 +13,16 @@ import java.util.Set;
 
 @Entity
 public class Customer {
-    @NotNull
-    private String name;
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private long customerId;
     @NotNull
+    private String name;
+    @NotNull
     private Date startDate;
     private String location;
     private String billingAddress;
-    @OneToMany (mappedBy = "customerId")
+    @OneToMany (mappedBy = "customer")
     private Set<Gateway> gateways;
 
     public String getName() {

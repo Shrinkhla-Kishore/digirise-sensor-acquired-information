@@ -1,4 +1,4 @@
-package com.digirise.connectionmanager.model;
+package com.digirise.server.model;
 
 import javax.persistence.*;
 import java.util.Set;
@@ -16,11 +16,11 @@ public class Gateway {
     private long gatewayId;
     @ManyToOne
     @JoinColumn(name = "customerId", nullable = false)
-    private Customer customerId;
+    private Customer customer;
     private String name;
     private String coordinates;
     private String location;
-    @OneToMany (mappedBy = "gatewayId")
+    @OneToMany (mappedBy = "gateway")
     private Set<Sensor> sensors;
 
 
@@ -32,12 +32,12 @@ public class Gateway {
         this.gatewayId = gatewayId;
     }
 
-    public Customer getCustomerId() {
-        return customerId;
+    public Customer getCustomer() {
+        return customer;
     }
 
-    public void setCustomerId(Customer customerId) {
-        this.customerId = customerId;
+    public void setCustomer(Customer customer) {
+        this.customer = customer;
     }
 
     public String getName() {
