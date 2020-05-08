@@ -14,6 +14,6 @@ public class Application {
     private static final Logger s_logger = LoggerFactory.getLogger(Application.class);
     public static void main(String[] args) {
         SpringApplication.run(Application.class, args);
-        s_logger.info("Started the connection manager");
+        s_logger.info("Started the Server connection manager");
     }
 }

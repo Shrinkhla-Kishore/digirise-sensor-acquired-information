@@ -1,5 +1,7 @@
 package com.digirise.server.model;
 
+import org.hibernate.validator.constraints.UniqueElements;
+
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import java.util.Date;
@@ -17,6 +19,7 @@ public class Customer {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private long customerId;
     @NotNull
+    @UniqueElements
     private String name;
     @NotNull
     private Date startDate;

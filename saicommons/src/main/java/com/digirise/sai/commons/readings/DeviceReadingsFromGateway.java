@@ -1,4 +1,4 @@
-package com.digirise.sai.commons.dataobjects;
+package com.digirise.sai.commons.readings;
 
 import java.sql.Timestamp;
 import java.util.List;

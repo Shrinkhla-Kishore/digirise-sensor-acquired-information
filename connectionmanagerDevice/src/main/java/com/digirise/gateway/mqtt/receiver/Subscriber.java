@@ -1,4 +1,4 @@
-package com.digirise.connectionmanager.mqtt.receiver;
+package com.digirise.gateway.mqtt.receiver;
 
 import org.eclipse.paho.client.mqttv3.MqttClient;
 import org.eclipse.paho.client.mqttv3.MqttException;

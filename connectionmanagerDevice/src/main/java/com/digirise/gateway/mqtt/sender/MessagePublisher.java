@@ -1,9 +1,12 @@
-package com.digirise.connectionmanager.mqtt.sender;
+package com.digirise.gateway.mqtt.sender;
 
-import com.digirise.api.GatewayDataProtos;
-import com.digirise.connectionmanager.mqtt.sender.serialization.DevicesReadingsFromGatewaySerializer;
-import com.digirise.sai.commons.dataobjects.DeviceData;
-import com.digirise.sai.commons.dataobjects.DeviceReading;
+import com.digirise.gateway.mqtt.sender.serialization.DevicesReadingsFromGatewaySerializer;
+import com.digirise.gateway.mqtt.sender.serialization.GatewayDiscoverySerializer;
+import com.digirise.proto.GatewayDataProtos;
+import com.digirise.proto.GatewayDiscoveryProtos;
+import com.digirise.sai.commons.discovery.GatewayDiscovery;
+import com.digirise.sai.commons.readings.DeviceData;
+import com.digirise.sai.commons.readings.DeviceReading;
 import org.eclipse.paho.client.mqttv3.MqttClient;
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.eclipse.paho.client.mqttv3.MqttException;
@@ -11,6 +14,7 @@ import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.io.ByteArrayOutputStream;
@@ -30,12 +34,24 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 
 @Component
-public class Publisher {
-    private static final Logger s_logger = LoggerFactory.getLogger(Publisher.class);
-
+public class MessagePublisher {
+    private static final Logger s_logger = LoggerFactory.getLogger(MessagePublisher.class);
     @Autowired
     private DevicesReadingsFromGatewaySerializer devicesReadingsFromGatewaySerializer;
-    private static final String SUFFIX_TOPIC = "/data/";
+    @Autowired
+    private GatewayDiscoverySerializer gatewayDiscoverySerializer;
+    @Value("${gateway.name}")
+    private String gatewayName;
+    @Value("${gateway.customer.name}")
+    private String gatewayCustomerName;
+    @Value("${gateway.customer.id}")
+    private String gatewayCustomerId;
+    @Value("${gateway.location}")
+    private String gatewayLocation;
+    @Value("${gateway.coordinates}")
+    private String gatewayCoordinates;
+    private static final String SUFFIX_DATA_TOPIC = "/data/";
+    private static final String SUFFIX_INFO_TOPIC = "/info/";
     private static final String PREFIX_TOPIC = "gateway/";
     private AtomicInteger alarmId;
     public final int qosLevel = 2;
@@ -43,7 +59,7 @@ public class Publisher {
     private MqttClient mqttClient;
     private MqttConnectOptions options;
 
-    public Publisher() {
+    public MessagePublisher() {
         alarmId = new AtomicInteger(40);
     }
 
@@ -66,11 +82,14 @@ public class Publisher {
                 }
             }
             if (mqttClient.isConnected()) {
-                s_logger.info("Publisher connected to MQTT broker {}", mqttBroker);
+                s_logger.info("MessagePublisher connected to MQTT broker {}", mqttBroker);
+                String gatewayInfoTopicResp = PREFIX_TOPIC + gatewayId + SUFFIX_INFO_TOPIC + "+/response";
+                mqttClient.subscribe(gatewayInfoTopicResp, new ResponseCallback());
+                s_logger.info("MessagePublisher subscribed to topic {}", gatewayInfoTopicResp);
                 String topicName = "gateway/" + gatewayId + "/data/+/response";
                 mqttClient.subscribe(topicName, new ResponseCallback());
                 // mqttClient.setCallback(new ResponseCallback());
-                s_logger.info("Publisher subscribed to topic {}", topicName);
+                s_logger.info("MessagePublisher subscribed to topic {}", topicName);
             }
         } catch (MqttException e) {
             s_logger.warn("Error creating mqtt client for gateway id {}", gatewayId);
@@ -82,25 +101,13 @@ public class Publisher {
         if (mqttClient.isConnected()) {
             if (checkIfDataToSend()) {
                 UUID uuid = UUID.randomUUID();
-                String alarm_topic = PREFIX_TOPIC + gatewayId + SUFFIX_TOPIC + uuid;
+                String alarm_topic = PREFIX_TOPIC + gatewayId + SUFFIX_DATA_TOPIC + uuid;
 
                 List<DeviceData> fakeDevicesData = new ArrayList<>();
                 //TO-DO: Handle real sensor data
                 fakeDevicesData.add(createDeviceData());
                 GatewayDataProtos.DevicesReadingsFromGateway gatewayReadings = devicesReadingsFromGatewaySerializer.serializeDevicesData(fakeDevicesData);
-                ByteArrayOutputStream byteOutputStream = new ByteArrayOutputStream();
-                ObjectOutputStream os = new ObjectOutputStream(byteOutputStream);
-                os.writeObject(gatewayReadings);
-             //   ByteArrayOutputStream byteArrayOutputStream = prepareDataToSend();
-
-                s_logger.info("ClientId {} publishing data on topic {}",
-                        mqttClient.getClientId(), alarm_topic);
-                MqttMessage mqttMessage = new MqttMessage(byteOutputStream.toByteArray());
-
-
-                mqttMessage.setQos(1);
-                mqttMessage.setId(alarmId.get());
-                mqttClient.publish(alarm_topic, mqttMessage);
+                publishInformation(gatewayReadings,alarm_topic);
             } else {
                 s_logger.debug("No data to send from the connected devices");
             }
@@ -108,6 +115,40 @@ public class Publisher {
             s_logger.warn("Mqtt gateway with Id {} not connected", gatewayId);
             startPublisher(mqttBroker, gatewayId);
         }
+    }
+
+    public void sendGatewayDiscoveryInfo() throws IOException, MqttException {
+        GatewayDiscovery gatewayDiscovery = new GatewayDiscovery();
+        s_logger.info("Sending gatewayDiscovery information");
+        s_logger.info("containing: gatewayName {}, customerName {}, CustomerId {}, location {}, coordinates {}",
+                gatewayName, gatewayCustomerName, gatewayCustomerId, gatewayLocation, gatewayCoordinates);
+        gatewayDiscovery.setGatewayName(gatewayName);
+        if(gatewayCustomerName != null && gatewayCustomerName.length() > 0)
+            gatewayDiscovery.setCustomerName(gatewayCustomerName);
+        if (gatewayCustomerId != null && gatewayCustomerId.trim().length() > 0){
+            gatewayCustomerId = gatewayCustomerId.trim();
+            s_logger.info("GatewayCustomerId is {}, and {}", gatewayCustomerId, Long.parseLong(gatewayCustomerId));
+            gatewayDiscovery.setCustomerId(Long.parseLong(gatewayCustomerId));
+        }
+        gatewayDiscovery.setLocation(gatewayLocation);
+        gatewayDiscovery.setCoordinates(gatewayCoordinates);
+        GatewayDiscoveryProtos.GatewayDiscovery gatewayDiscoveryProto =
+                gatewayDiscoverySerializer.serializeGatewayDiscovery(gatewayDiscovery);
+        UUID uuid = UUID.randomUUID();
+        String gatewayInfoTopic = PREFIX_TOPIC + gatewayId + SUFFIX_INFO_TOPIC + uuid;
+        publishInformation(gatewayDiscoveryProto, gatewayInfoTopic);
+    }
+
+    private void publishInformation(Object protoObject, String topic) throws IOException, MqttException {
+        ByteArrayOutputStream byteOutputStream = new ByteArrayOutputStream();
+        ObjectOutputStream os = new ObjectOutputStream(byteOutputStream);
+        os.writeObject(protoObject);
+        s_logger.info("ClientId {} publishing data on topic {}",
+                mqttClient.getClientId(), topic);
+        MqttMessage mqttMessage = new MqttMessage(byteOutputStream.toByteArray());
+        mqttMessage.setQos(1);
+        mqttMessage.setId(alarmId.get());
+        mqttClient.publish(topic, mqttMessage);
     }
 
     private boolean checkIfDataToSend() {
@@ -159,6 +200,7 @@ public class Publisher {
         options.setCleanSession(false);
         options.setUserName(gatewayId);
         options.setKeepAliveInterval(60);
+        options.setConnectionTimeout(300);
       //  options.setAutomaticReconnect(true);
       //  options.setMqttVersion(MqttConnectOptions.MQTT_VERSION_3_1_1);
         try {

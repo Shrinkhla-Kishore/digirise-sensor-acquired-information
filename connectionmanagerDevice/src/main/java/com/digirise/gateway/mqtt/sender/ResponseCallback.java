@@ -1,4 +1,4 @@
-package com.digirise.connectionmanager.mqtt.sender;
+package com.digirise.gateway.mqtt.sender;
 
 import org.eclipse.paho.client.mqttv3.*;
 import org.slf4j.Logger;

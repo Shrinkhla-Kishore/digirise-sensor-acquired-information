@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+package com.digirise.proto;
+
+option java_outer_classname = "GatewayDiscoveryProtos";
+
+message GatewayDiscovery {
+    string gatewayName = 1;
+    string customerName = 2;
+    uint64 customerId = 3;
+    string coordinates = 4;
+    string location = 5;
+    string timestamp = 6;
+}

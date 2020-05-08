@@ -1,9 +1,9 @@
 package com.digirise.server.mqtt.receiver.deserialization;
 
-import com.digirise.api.GatewayDataProtos;
-import com.digirise.sai.commons.dataobjects.DeviceData;
-import com.digirise.sai.commons.dataobjects.DeviceReading;
-import com.digirise.sai.commons.dataobjects.DeviceReadingsFromGateway;
+import com.digirise.proto.GatewayDataProtos;
+import com.digirise.sai.commons.readings.DeviceData;
+import com.digirise.sai.commons.readings.DeviceReading;
+import com.digirise.sai.commons.readings.DeviceReadingsFromGateway;
 import org.springframework.stereotype.Component;
 
 import java.sql.Timestamp;

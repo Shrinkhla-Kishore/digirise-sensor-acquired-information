@@ -1,6 +1,9 @@
 package com.digirise.server.model;
 
+import org.hibernate.validator.constraints.UniqueElements;
+
 import javax.persistence.*;
+import javax.validation.constraints.NotNull;
 import java.util.Set;
 
 /**
@@ -17,6 +20,7 @@ public class Gateway {
     @ManyToOne
     @JoinColumn(name = "customerId", nullable = false)
     private Customer customer;
+    @NotNull
     private String name;
     private String coordinates;
     private String location;

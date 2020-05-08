@@ -1,4 +1,4 @@
-//package com.getinge.connectionmanager.mqtt.receiver;
+//package com.getinge.gateway.mqtt.receiver;
 //
 //import org.eclipse.paho.client.mqttv3.*;
 //import org.slf4j.Logger;

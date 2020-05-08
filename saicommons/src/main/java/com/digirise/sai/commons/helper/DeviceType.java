@@ -1,4 +1,4 @@
-package com.digirise.sai.commons.dataobjects;
+package com.digirise.sai.commons.helper;
 
 public enum DeviceType {
     TEMPERATURE_SENSOR,

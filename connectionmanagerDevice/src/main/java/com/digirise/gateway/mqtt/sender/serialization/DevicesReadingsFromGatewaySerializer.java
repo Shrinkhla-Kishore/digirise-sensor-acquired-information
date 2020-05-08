@@ -1,8 +1,8 @@
-package com.digirise.connectionmanager.mqtt.sender.serialization;
+package com.digirise.gateway.mqtt.sender.serialization;
 
-import com.digirise.api.GatewayDataProtos;
-import com.digirise.sai.commons.dataobjects.DeviceData;
-import com.digirise.sai.commons.dataobjects.DeviceReading;
+import com.digirise.proto.GatewayDataProtos;
+import com.digirise.sai.commons.readings.DeviceData;
+import com.digirise.sai.commons.readings.DeviceReading;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;

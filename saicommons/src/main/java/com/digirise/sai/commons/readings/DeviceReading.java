@@ -1,6 +1,6 @@
-package com.digirise.sai.commons.dataobjects;
+package com.digirise.sai.commons.readings;
 
-import com.digirise.api.GatewayDataProtos;
+import com.digirise.proto.GatewayDataProtos;
 
 public class DeviceReading {
     private GatewayDataProtos.ReadingType readingType;
