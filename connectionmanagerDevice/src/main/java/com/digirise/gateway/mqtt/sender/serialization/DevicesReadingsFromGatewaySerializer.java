@@ -1,8 +1,11 @@
 package com.digirise.gateway.mqtt.sender.serialization;
 
+import com.digirise.proto.CommnStructuresProtos;
 import com.digirise.proto.GatewayDataProtos;
+import com.digirise.sai.commons.helper.DeviceReading;
+import com.digirise.sai.commons.helper.ReadingType;
 import com.digirise.sai.commons.readings.DeviceData;
-import com.digirise.sai.commons.readings.DeviceReading;
+import com.digirise.sai.commons.readings.DeviceReadingsFromGateway;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -22,28 +25,29 @@ import java.util.List;
 public class DevicesReadingsFromGatewaySerializer {
     private static final Logger s_logger = LoggerFactory.getLogger(DevicesReadingsFromGatewaySerializer.class);
 
-    public GatewayDataProtos.DevicesReadingsFromGateway serializeDevicesData(List<DeviceData> devicesData){
+    public GatewayDataProtos.DevicesReadingsFromGateway serializeDevicesData(DeviceReadingsFromGateway devicesReadingsFromGateway){
+        List<DeviceData> devicesData = devicesReadingsFromGateway.getDeviceDataList();
         s_logger.info("Serializing gatewayReadings ... connected number of devices {}", devicesData.size());
-        GatewayDataProtos.DevicesReadingsFromGateway.Builder devicesReadingsFromGateway =
+        GatewayDataProtos.DevicesReadingsFromGateway.Builder devicesReadingsFromGatewayProto =
                 GatewayDataProtos.DevicesReadingsFromGateway.newBuilder();
         Timestamp timestamp = new Timestamp(new Date().getTime());
         DateTimeFormatter formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
         String timestampAsString = formatter.format(timestamp.toLocalDateTime());
-        devicesReadingsFromGateway.setGatewayTimestamp(timestampAsString);
+        devicesReadingsFromGatewayProto.setGatewayTimestamp(timestampAsString);
+        devicesReadingsFromGatewayProto.setGatewayName(devicesReadingsFromGateway.getGatewayName());
+        devicesReadingsFromGatewayProto.setCustomerName(devicesReadingsFromGateway.getCustomerName());
         s_logger.info("Setting gateway timestamp to {} inside protobuf message", timestampAsString);
         for (DeviceData deviceData : devicesData) {
-            devicesReadingsFromGateway.addDeviceData(serializeDeviceData(deviceData));
+            devicesReadingsFromGatewayProto.addDeviceData(serializeDeviceData(deviceData));
         }
-        return devicesReadingsFromGateway.build();
+        return devicesReadingsFromGatewayProto.build();
     }
 
     private GatewayDataProtos.DeviceData serializeDeviceData(DeviceData deviceDataToSend) {
         s_logger.info("Serializing device data ...");
         GatewayDataProtos.DeviceData.Builder deviceDataBuilder = GatewayDataProtos.DeviceData.newBuilder();
-        deviceDataBuilder.setDeviceId(deviceDataToSend.getDeviceId());
-        deviceDataBuilder.setDeviceType(deviceDataToSend.getDeviceType());
-        s_logger.info("building protobuf for device id {} : {}.",
-                deviceDataBuilder.getDeviceId(), deviceDataBuilder.getDeviceType());
+        deviceDataBuilder.setDeviceName(deviceDataToSend.getDeviceName());
+        s_logger.info("building protobuf for device id {}.", deviceDataBuilder.getDeviceName());
         if (deviceDataToSend.getDeviceReadings() != null && deviceDataToSend.getDeviceReadings().size() > 0) {
             s_logger.info("Size of device readings is {}", deviceDataToSend.getDeviceReadings().size());
         } else {
@@ -51,9 +55,13 @@ public class DevicesReadingsFromGatewaySerializer {
         }
 
         for (DeviceReading deviceReading : deviceDataToSend.getDeviceReadings()) {
-            GatewayDataProtos.ReadingType readingType = deviceReading.getReadingType();
+            CommnStructuresProtos.ReadingType readingType = null;
+            if (deviceReading.getReadingType() == ReadingType.SENSOR_CURRENT_VALUE)
+                readingType = CommnStructuresProtos.ReadingType.SENSOR_CURRENT_VALUE;
+            else if (deviceReading.getReadingType() == ReadingType.SENSOR_OTHER_VALUE)
+                readingType = CommnStructuresProtos.ReadingType.SENSOR_OTHER_VALUE;
             String value = deviceReading.getValue();
-            GatewayDataProtos.DeviceReadings.Builder readings = GatewayDataProtos.DeviceReadings.newBuilder();
+            CommnStructuresProtos.DeviceReadings.Builder readings = CommnStructuresProtos.DeviceReadings.newBuilder();
             readings.setReadingType(readingType);
             readings.setValue(value);
             deviceDataBuilder.addAllReadingsFromDevice(readings.build());

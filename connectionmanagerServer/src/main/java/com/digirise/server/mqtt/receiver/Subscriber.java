@@ -3,30 +3,32 @@ package com.digirise.server.mqtt.receiver;
 import com.digirise.proto.GatewayDataProtos;
 import com.digirise.proto.GatewayDiscoveryProtos;
 import com.digirise.sai.commons.discovery.GatewayDiscovery;
-import com.digirise.sai.commons.readings.DeviceData;
-import com.digirise.sai.commons.readings.DeviceReading;
-import com.digirise.sai.commons.readings.DeviceReadingsFromGateway;
-import com.digirise.server.model.GatewayRepository;
-import com.digirise.server.mqtt.receiver.deserialization.DeviceReadingsFromGatewayDeserializer;
-import com.digirise.server.mqtt.receiver.deserialization.GatewayDiscoveryDeserializer;
+import com.digirise.sai.commons.helper.DeviceReadingsResponse;
+import com.digirise.server.handler.DataProcessingGrpcClient;
+import com.digirise.server.handler.DataProcessingMessageHandler;
+import com.digirise.server.handler.DatabaseHelper;
+import com.digirise.server.mqtt.receiver.deserialize.DeviceReadingsFromGatewayDeserializer;
+import com.digirise.server.mqtt.receiver.deserialize.DeviceReadingsResponseDeserializer;
+import com.digirise.server.mqtt.receiver.deserialize.GatewayDiscoveryDeserializer;
+import com.digirise.server.mqtt.receiver.serialize.DeviceReadingsResponseSerializer;
+import com.digirise.server.mqtt.receiver.serialize.DevicesReadingsBetweenServersSerializer;
 import org.eclipse.paho.client.mqttv3.MqttClient;
 import org.eclipse.paho.client.mqttv3.MqttException;
-import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.ObjectInput;
-import java.io.ObjectInputStream;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 @Component
-public class Subscriber implements Runnable{
+public class Subscriber /*implements Runnable */ {
     private static final Logger s_logger = LoggerFactory.getLogger(Subscriber.class);
     @Value("${mqtt.broker}")
     private String s_mqttBroker;
@@ -35,56 +37,32 @@ public class Subscriber implements Runnable{
     @Value("${mqtt.info.topic}")
     private String infoTopic;
     @Autowired
-    private DeviceReadingsFromGatewayDeserializer deserializer;
-    @Autowired
     private GatewayDiscoveryDeserializer gatewayDiscoveryDeserializer;
     @Autowired
-    private GatewayRepository gatewayRepository;
+    private DeviceReadingsFromGatewayDeserializer deviceReadingsFromGatewayDeserializer;
+    @Autowired
+    private DeviceReadingsResponseDeserializer deviceReadingsResponseDeserializer;
+    @Autowired
+    private DevicesReadingsBetweenServersSerializer devicesReadingsBetweenServersSerializer;
+    @Autowired
+    private DeviceReadingsResponseSerializer deviceReadingsResponseSerializer;
+    @Autowired
+    private DatabaseHelper databaseHelper;
+    @Autowired
+    private DataProcessingGrpcClient dataProcessingGrpcClient;
+    @Autowired
+    private SubscriberResponse subscriberResponse;
     private String mqttClientId;
     private MqttClient mqttClient;
     private List<String> deviceConnectedClients;
+    private ThreadPoolExecutor deviceDataHandlerPool;
 
-    public void configureSubscriber() {
-        try {
-            deviceConnectedClients = new ArrayList<>();
-            mqttClientId = "serverApplication";
-            mqttClient = new MqttClient(s_mqttBroker, mqttClientId);
-//            while (!mqttClient.isConnected()){
-//                try {
-//                    Thread.currentThread().sleep(5000);
-//                    mqttClient.connect();
-//                    s_logger.info("Mqtt subscriber started. Connected to {}", s_mqttBroker);
-//                    subscribeDataTopic();
-//                } catch (MqttException e) {
-//                    s_logger.warn("Error connecting to mqtt broker {}", s_mqttBroker);
-//                } catch (InterruptedException e) {
-//                    e.printStackTrace();
-//                }
-//            }
-        } catch (MqttException e) {
-            e.printStackTrace();
-            System.exit(1);
-        }
+    public Subscriber() {
+        deviceConnectedClients = new ArrayList<>();
+        deviceDataHandlerPool = new ThreadPoolExecutor(10, 10, 60000, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>());
     }
 
-    @Override
-    public void run() {
-        if (!mqttClient.isConnected()) {
-            try {
-                Thread.currentThread().sleep(5000);
-                mqttClient.connect();
-                s_logger.info("Mqtt subscriber started. Connected to {}", s_mqttBroker);
-                subscribeInfoTopic();
-                subscribeDataTopic();
-            } catch (MqttException e) {
-                s_logger.warn("Error connecting to mqtt broker {}", s_mqttBroker);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
-    public void subscribeInfoTopic() {
+    public void subscribeGatewayDiscoveryTopic() {
         try {
             if (mqttClient.isConnected()){
                 mqttClient.subscribe(infoTopic, (topic, message) -> {
@@ -109,7 +87,9 @@ public class Subscriber implements Runnable{
                         s_logger.info("GatewayDiscovery message contains gatewayName {}, customerName {}, customerId {}, location {}, coordinates {}, timestamp {} ",
                                 gatewayDiscovery.getGatewayName(), gatewayDiscovery.getCustomerName(), gatewayDiscovery.getCustomerId(),
                                 gatewayDiscovery.getLocation(), gatewayDiscovery.getCoordinates(), gatewayDiscovery.getTimestamp());
-                        // save the gateway information to database
+
+                        // Save to database, check that customerName or Id is found. If, so then save the gateway information
+                        databaseHelper.saveGatewayToDatabase(gatewayDiscovery);
                     }
                 });
             }
@@ -118,10 +98,9 @@ public class Subscriber implements Runnable{
         }
     }
 
-    public void subscribeDataTopic() {
+    public void subscribeDeviceDataTopic() {
         try {
             if (mqttClient.isConnected()){
-                s_logger.info("client is connected :)");
                 mqttClient.subscribe(dataTopic, (topic, message) -> {
                     if (mqttClient.isConnected()) {
                         s_logger.info("Received message of size {} bytes on topic {}", message.getPayload().length, topic);
@@ -130,51 +109,51 @@ public class Subscriber implements Runnable{
                         String topicTemp = topic.substring(prefixLength);
                         int lastIndex = topicTemp.indexOf("/");
                         String gatewayId = topicTemp.substring(0, lastIndex);
-                        s_logger.info("Received data from gateway mqttClientId {}, message Id: {}", gatewayId, message.getId());
+                        s_logger.info("Received data from gateway mqttClientId/gatewayId {}, message Id: {}", gatewayId, message.getId());
                         if (!deviceConnectedClients.contains(gatewayId)) {
                             deviceConnectedClients.add(gatewayId);
                             s_logger.info("Added new client {} to connected Device list", gatewayId);
                         }
-                        s_logger.info("DATA RECEIVED FROM GATEWAY {} with messageId:", gatewayId, message.getId());
+                        s_logger.info(" SENSOR DATA RECEIVED FROM GATEWAY {} with messageId:", gatewayId, message.getId());
                         ByteArrayInputStream bis = new ByteArrayInputStream(message.getPayload());
                         ObjectInput in = new ObjectInputStream(bis);
                         GatewayDataProtos.DevicesReadingsFromGateway gatewayReadingsProtobuf = (GatewayDataProtos.DevicesReadingsFromGateway) in.readObject();
 
-                        DeviceReadingsFromGateway gatewayReadings = deserializer.deserializeDeviceReadingsFromGateway(gatewayReadingsProtobuf);
-                        s_logger.info("Gateway timestamp {}", gatewayReadings.getGatewayTimestamp().toString());
-                        for (DeviceData deviceData : gatewayReadings.getDeviceDataList()) {
-                            s_logger.info("Device id {}: {}", deviceData.getDeviceId(), deviceData.getDeviceType());
-                            s_logger.info("device data timestamp {}", deviceData.getTimestamp().toString());
-                            for (DeviceReading reading : deviceData.getDeviceReadings()) {
-                                s_logger.info("reading type {}", reading.getReadingType().toString());
-                                s_logger.info("reading value: {}", reading.getValue());
-                            }
-                        }
+                        // Sending gateway readings to Data Processing application
+                        DataProcessingMessageHandler dataProcessingMessageHandler = new DataProcessingMessageHandler(dataProcessingGrpcClient.getManagedChannel(), mqttClient,
+                                topic, databaseHelper, deviceReadingsFromGatewayDeserializer, devicesReadingsBetweenServersSerializer, deviceReadingsResponseDeserializer,
+                                deviceReadingsResponseSerializer, subscriberResponse, gatewayReadingsProtobuf);
+                        deviceDataHandlerPool.execute(dataProcessingMessageHandler);
+                   //     dataProcessingMessageHandler.handleMessage(gatewayReadingsProtobuf);
+                        s_logger.info("GatewayReadings disptached for furthur handling");
 
-                        String responseTopic = topic + "/response";
+                        //TODO: Send a response back to the gateway device !!!
+//                        String responseTopic = topic + "/response";
+//                        DeviceReadingsResponseToGateway responseToGateway = new DeviceReadingsResponseToGateway();
+//                        responseToGateway.setResponseStatus(responseFromDPDeserialized.getResponseStatus());
+//                        s_logger.info("Sending response back to publisher on response topic {}. Response {}", responseTopic, responseToGateway.getResponseStatus());
+//                        GatewayDataProtos.DeviceReadingsResponseToGateway responseToGatewayProto =
+//                                deviceReadingsResponseSerializer.serialize(responseToGateway);
+//                        ByteArrayOutputStream byteOutputStream = new ByteArrayOutputStream();
+//                        ObjectOutputStream os = new ObjectOutputStream(byteOutputStream);
+//                        os.writeObject(responseToGatewayProto);
+//                        MqttMessage messageToSend = new MqttMessage(byteOutputStream.toByteArray());
 
-                        ByteArrayOutputStream byteOutputStream = new ByteArrayOutputStream();
-                        String response = "Success " + message.getId();
-                        s_logger.info("Sending response back to publisher on response topic {}. Response {}", responseTopic, response);
-                        MqttMessage messageToSend = new MqttMessage(response.getBytes());
-
-                        mqttClient.publish(responseTopic, messageToSend);
-                        s_logger.info("Response sent on response topic {} successfully", responseTopic);
+//                        mqttClient.publish(responseTopic, messageToSend);
+//                        s_logger.info("Response sent on response topic {} successfully", responseTopic);
                     } else {
                         s_logger.warn("Server application lost connection to broker {}", s_mqttBroker);
-                        configureSubscriber();
+                //        configureMqtt();
                     }
-
                 });
             } else {
                 s_logger.warn("Disconnected to the mqtt broker {}", s_mqttBroker);
-                configureSubscriber();
+            //    configureMqtt();
             }
-
         } catch(MqttException e) {
-
         }
     }
+
 
     private  void subscribeToData() throws MqttException {
         while (true){
@@ -182,12 +161,12 @@ public class Subscriber implements Runnable{
         }
     }
 
-    public String getMqttClientId() {
-        return mqttClientId;
+    public void setMqttClientId(String mqttClientId) {
+        this.mqttClientId = mqttClientId;
     }
 
-    public MqttClient getMqttClient() {
-        return mqttClient;
+    public void setMqttClient(MqttClient mqttClient) {
+        this.mqttClient = mqttClient;
     }
 
     public List<String> getDeviceConnectedClients() {

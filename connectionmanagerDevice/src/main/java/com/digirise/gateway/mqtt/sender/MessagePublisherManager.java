@@ -32,10 +32,10 @@ public class MessagePublisherManager {
         for (int i=1; i<=1; i++) {
             String cltId = String.valueOf(this.clientId.getAndIncrement());
             //MessagePublisher publisher = new MessagePublisher(cltId);
-            publisher.startPublisher(mqttBroker, cltId);
-            s_logger.info("created publisher with id {}", cltId);
+            publisher.startPublisher(mqttBroker);
+            s_logger.info("created publisher");
             publishersList.add(publisher);
-            s_logger.info("MessagePublisher {} added", cltId);
+            s_logger.info("MessagePublisher added");
         }
     }
 

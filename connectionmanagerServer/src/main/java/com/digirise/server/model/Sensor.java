@@ -13,10 +13,11 @@ public class Sensor {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private long sensorId;
+    private String sensorName;
     private String type;
     private String location;
     @ManyToOne
-    @JoinColumn(name = "gateway", nullable = false)
+    @JoinColumn(name = "gatewayId", nullable = false)
     private Gateway gateway;
 
     public long getSensorId() {
@@ -25,6 +26,14 @@ public class Sensor {
 
     public void setSensorId(long sensorId) {
         this.sensorId = sensorId;
+    }
+
+    public String getSensorName() {
+        return sensorName;
+    }
+
+    public void setSensorName(String sensorName) {
+        this.sensorName = sensorName;
     }
 
     public String getType() {

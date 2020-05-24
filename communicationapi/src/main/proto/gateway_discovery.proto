@@ -3,6 +3,12 @@ syntax = "proto3";
 package com.digirise.proto;
 
 option java_outer_classname = "GatewayDiscoveryProtos";
+import public "common_structures.proto";
+
+message DeviceInfo {
+    string deviceName = 1;
+    DeviceType deviceType = 2;
+}
 
 message GatewayDiscovery {
     string gatewayName = 1;
@@ -10,5 +16,11 @@ message GatewayDiscovery {
     uint64 customerId = 3;
     string coordinates = 4;
     string location = 5;
-    string timestamp = 6;
+    repeated DeviceInfo deviceInfos =6;
+    string timestamp = 7;
 }
+
+// Request sent by gateway gateway/<gatewayId>/info/<uuid>
+// GatewayDiscovery message
+// Response sent by server
+// ??

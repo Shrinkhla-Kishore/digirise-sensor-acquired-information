@@ -1,6 +1,9 @@
 package com.digirise.sai.commons.discovery;
 
+import com.digirise.sai.commons.helper.DeviceType;
+
 import java.sql.Timestamp;
+import java.util.List;
 
 /**
  * Created by IntelliJ IDEA.
@@ -13,6 +16,7 @@ public class GatewayDiscovery {
     private long customerId;
     private String coordinates;
     private String location;
+    private List<DeviceInfo> deviceIds;
     private Timestamp timestamp;
 
     public String getGatewayName() {
@@ -55,6 +59,14 @@ public class GatewayDiscovery {
         this.location = location;
     }
 
+    public List<DeviceInfo> getDeviceIds() {
+        return deviceIds;
+    }
+
+    public void setDeviceIds(List<DeviceInfo> deviceIds) {
+        this.deviceIds = deviceIds;
+    }
+
     public Timestamp getTimestamp() {
         return timestamp;
     }
@@ -62,4 +74,7 @@ public class GatewayDiscovery {
     public void setTimestamp(Timestamp timestamp) {
         this.timestamp = timestamp;
     }
+
 }
+
+

@@ -1,6 +1,6 @@
 package com.digirise.sai.commons.readings;
 
-import com.digirise.proto.GatewayDataProtos;
+import com.digirise.sai.commons.helper.DeviceReading;
 
 import java.sql.Timestamp;
 import java.util.List;
@@ -11,26 +11,26 @@ import java.util.List;
  * Author: shrinkhlak
  */
 public class DeviceData {
-    private String deviceId;
-    private GatewayDataProtos.DeviceType deviceType;
+    private String deviceName;
+    //private GatewayDataProtos.DeviceType deviceType;
     private List<DeviceReading> deviceReadings;
     private Timestamp timestamp;
 
-    public String getDeviceId() {
-        return deviceId;
+    public String getDeviceName() {
+        return deviceName;
     }
 
-    public void setDeviceId(String deviceId) {
-        this.deviceId = deviceId;
+    public void setDeviceName(String deviceName) {
+        this.deviceName = deviceName;
     }
 
-    public GatewayDataProtos.DeviceType getDeviceType() {
-        return deviceType;
-    }
-
-    public void setDeviceType(GatewayDataProtos.DeviceType deviceType) {
-        this.deviceType = deviceType;
-    }
+//    public GatewayDataProtos.DeviceType getDeviceType() {
+//        return deviceType;
+//    }
+//
+//    public void setDeviceType(GatewayDataProtos.DeviceType deviceType) {
+//        this.deviceType = deviceType;
+//    }
 
     public List<DeviceReading> getDeviceReadings() {
         return deviceReadings;

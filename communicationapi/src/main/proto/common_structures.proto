@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+package com.digirise.proto;
+
+option java_outer_classname = "CommnStructuresProtos";
+
+enum DeviceType {
+    TEMPERATURE_SENSOR = 0;
+    MOTION_SENSOR = 1;
+    HUMIDITY_SENSOR = 2;
+}
+
+enum ReadingType {
+    SENSOR_CURRENT_VALUE = 0;
+    SENSOR_OTHER_VALUE = 1;
+}
+
+message DeviceReadings {
+    ReadingType readingType = 1;
+    string value = 2;
+    string unit = 3;
+}
+
+enum ResponseStatus {
+    SUCCESS = 0;
+    SUCCESS_RESEND_DEVICE_DISCOVERY = 1;
+    FAILED = 2;
+}
+
+message DeviceReadingsResponse {
+    ResponseStatus status = 1;
+}

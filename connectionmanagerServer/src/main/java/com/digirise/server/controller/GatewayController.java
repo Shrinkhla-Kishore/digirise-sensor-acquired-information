@@ -1,6 +1,6 @@
 package com.digirise.server.controller;
 
-import com.digirise.server.service.GatewayInfoService;
+import com.digirise.server.handler.GatewayInfoService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;

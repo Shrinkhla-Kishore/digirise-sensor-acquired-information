@@ -5,8 +5,10 @@ import com.digirise.gateway.mqtt.sender.serialization.GatewayDiscoverySerializer
 import com.digirise.proto.GatewayDataProtos;
 import com.digirise.proto.GatewayDiscoveryProtos;
 import com.digirise.sai.commons.discovery.GatewayDiscovery;
+import com.digirise.sai.commons.helper.DeviceReading;
+import com.digirise.sai.commons.helper.ReadingType;
 import com.digirise.sai.commons.readings.DeviceData;
-import com.digirise.sai.commons.readings.DeviceReading;
+import com.digirise.sai.commons.readings.DeviceReadingsFromGateway;
 import org.eclipse.paho.client.mqttv3.MqttClient;
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.eclipse.paho.client.mqttv3.MqttException;
@@ -55,7 +57,7 @@ public class MessagePublisher {
     private static final String PREFIX_TOPIC = "gateway/";
     private AtomicInteger alarmId;
     public final int qosLevel = 2;
-    private String gatewayId;
+   // private String gatewayId;
     private MqttClient mqttClient;
     private MqttConnectOptions options;
 
@@ -63,11 +65,11 @@ public class MessagePublisher {
         alarmId = new AtomicInteger(40);
     }
 
-    public void startPublisher(String mqttBroker, String gatewayId) {
+    public void startPublisher(String mqttBroker/*, String gatewayId*/) {
         try {
-            this.gatewayId = gatewayId;
-            s_logger.info("creating publisher with gatewayId {}", gatewayId);
-            mqttClient = new MqttClient(mqttBroker, "gateway-" + gatewayId);
+       //     this.gatewayId = gatewayId;
+            s_logger.info("creating publisher with gateway name {}", gatewayName);
+            mqttClient = new MqttClient(mqttBroker, gatewayName);
             setConnectOptions();
             s_logger.info("Inside step 1");
             while (!mqttClient.isConnected()){
@@ -83,16 +85,16 @@ public class MessagePublisher {
             }
             if (mqttClient.isConnected()) {
                 s_logger.info("MessagePublisher connected to MQTT broker {}", mqttBroker);
-                String gatewayInfoTopicResp = PREFIX_TOPIC + gatewayId + SUFFIX_INFO_TOPIC + "+/response";
+                String gatewayInfoTopicResp = PREFIX_TOPIC + gatewayName + SUFFIX_INFO_TOPIC + "+/response";
                 mqttClient.subscribe(gatewayInfoTopicResp, new ResponseCallback());
                 s_logger.info("MessagePublisher subscribed to topic {}", gatewayInfoTopicResp);
-                String topicName = "gateway/" + gatewayId + "/data/+/response";
+                String topicName = "gateway/" + gatewayName + "/data/+/response";
                 mqttClient.subscribe(topicName, new ResponseCallback());
                 // mqttClient.setCallback(new ResponseCallback());
                 s_logger.info("MessagePublisher subscribed to topic {}", topicName);
             }
         } catch (MqttException e) {
-            s_logger.warn("Error creating mqtt client for gateway id {}", gatewayId);
+            s_logger.warn("Error creating mqtt client for gateway id {}", gatewayName);
         }
     }
 
@@ -101,19 +103,23 @@ public class MessagePublisher {
         if (mqttClient.isConnected()) {
             if (checkIfDataToSend()) {
                 UUID uuid = UUID.randomUUID();
-                String alarm_topic = PREFIX_TOPIC + gatewayId + SUFFIX_DATA_TOPIC + uuid;
+                String alarm_topic = PREFIX_TOPIC + gatewayName + SUFFIX_DATA_TOPIC + uuid;
 
                 List<DeviceData> fakeDevicesData = new ArrayList<>();
                 //TO-DO: Handle real sensor data
                 fakeDevicesData.add(createDeviceData());
-                GatewayDataProtos.DevicesReadingsFromGateway gatewayReadings = devicesReadingsFromGatewaySerializer.serializeDevicesData(fakeDevicesData);
+                DeviceReadingsFromGateway deviceReadingsFromGateway = new DeviceReadingsFromGateway();
+                deviceReadingsFromGateway.setCustomerName(gatewayCustomerName);
+                deviceReadingsFromGateway.setGatewayName(gatewayName);
+                deviceReadingsFromGateway.setDeviceDataList(fakeDevicesData);
+                GatewayDataProtos.DevicesReadingsFromGateway gatewayReadings = devicesReadingsFromGatewaySerializer.serializeDevicesData(deviceReadingsFromGateway);
                 publishInformation(gatewayReadings,alarm_topic);
             } else {
                 s_logger.debug("No data to send from the connected devices");
             }
         } else {
-            s_logger.warn("Mqtt gateway with Id {} not connected", gatewayId);
-            startPublisher(mqttBroker, gatewayId);
+            s_logger.warn("Mqtt gateway with Id {} not connected", gatewayName);
+            startPublisher(mqttBroker);
         }
     }
 
@@ -132,10 +138,11 @@ public class MessagePublisher {
         }
         gatewayDiscovery.setLocation(gatewayLocation);
         gatewayDiscovery.setCoordinates(gatewayCoordinates);
+        //TODO: Check if there is any device connected
         GatewayDiscoveryProtos.GatewayDiscovery gatewayDiscoveryProto =
                 gatewayDiscoverySerializer.serializeGatewayDiscovery(gatewayDiscovery);
         UUID uuid = UUID.randomUUID();
-        String gatewayInfoTopic = PREFIX_TOPIC + gatewayId + SUFFIX_INFO_TOPIC + uuid;
+        String gatewayInfoTopic = PREFIX_TOPIC + gatewayName + SUFFIX_INFO_TOPIC + uuid;
         publishInformation(gatewayDiscoveryProto, gatewayInfoTopic);
     }
 
@@ -156,37 +163,36 @@ public class MessagePublisher {
         return true;
     }
 
-    private ByteArrayOutputStream prepareDataToSend() throws IOException {
-        List<DeviceData> fakeDevicesData = new ArrayList<>();
-        //TO-DO: Handle real sensor data
-        fakeDevicesData.add(createDeviceData());
-        GatewayDataProtos.DevicesReadingsFromGateway gatewayReadings = devicesReadingsFromGatewaySerializer.serializeDevicesData(fakeDevicesData);
-        ByteArrayOutputStream byteOutputStream = new ByteArrayOutputStream();
-        ObjectOutputStream os = new ObjectOutputStream(byteOutputStream);
-        os.writeObject(gatewayReadings);
-        return byteOutputStream;
-    }
+//    private ByteArrayOutputStream prepareDataToSend() throws IOException {
+//        List<DeviceData> fakeDevicesData = new ArrayList<>();
+//        //TO-DO: Handle real sensor data
+//        fakeDevicesData.add(createDeviceData());
+//        GatewayDataProtos.DevicesReadingsFromGateway gatewayReadings = devicesReadingsFromGatewaySerializer.serializeDevicesData(fakeDevicesData);
+//        ByteArrayOutputStream byteOutputStream = new ByteArrayOutputStream();
+//        ObjectOutputStream os = new ObjectOutputStream(byteOutputStream);
+//        os.writeObject(gatewayReadings);
+//        return byteOutputStream;
+//    }
 
     private DeviceData createDeviceData() {
         //TODO: TO be removed. Fake data
         DeviceData deviceData = new DeviceData();
-        deviceData.setDeviceId(Integer.toString(alarmId.getAndIncrement()));
-        deviceData.setDeviceType(GatewayDataProtos.DeviceType.TEMPERATURE_SENSOR);
+        deviceData.setDeviceName(Integer.toString(alarmId.getAndIncrement()));
         deviceData.setTimestamp(new Timestamp(new Date().getTime()));
         DeviceReading reading = new DeviceReading();
         List<DeviceReading> deviceReadingList =  new ArrayList<>();
-        reading.setReadingType(GatewayDataProtos.ReadingType.SENSOR_CURRENT_VALUE);
+        reading.setReadingType(ReadingType.SENSOR_CURRENT_VALUE);
         reading.setValue(String.valueOf(alarmId.intValue() + 2));
         deviceReadingList.add(reading);
         deviceData.setDeviceReadings(deviceReadingList);
-        s_logger.info("CREATED FAKE DEVICE DATA FOR DEVICE ID {}: {},{}.",
-                deviceData.getDeviceId(), deviceData.getDeviceType(), deviceData.getTimestamp());
+        s_logger.info("CREATED FAKE DEVICE DATA FOR DEVICE ID {}: {}.",
+                deviceData.getDeviceName(), deviceData.getTimestamp());
         return deviceData;
     }
 
     public void closePublisher() {
         try {
-            s_logger.info("Shutting down the mqtt gateway {}", gatewayId);
+            s_logger.info("Shutting down the mqtt gateway {}", gatewayName);
             mqttClient.disconnect();
             mqttClient.close();
         } catch (MqttException e) {
@@ -198,7 +204,7 @@ public class MessagePublisher {
         s_logger.info("Setting the connect options");
         options = new MqttConnectOptions();
         options.setCleanSession(false);
-        options.setUserName(gatewayId);
+        options.setUserName(gatewayName);
         options.setKeepAliveInterval(60);
         options.setConnectionTimeout(300);
       //  options.setAutomaticReconnect(true);

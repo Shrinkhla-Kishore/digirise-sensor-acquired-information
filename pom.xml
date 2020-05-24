@@ -24,6 +24,7 @@
 		<module>saicommons</module>
 		<module>connectionmanagerDevice</module>
 		<module>connectionmanagerServer</module>
+		<module>dataProcessorServer</module>
 	</modules>
 	
 </project>

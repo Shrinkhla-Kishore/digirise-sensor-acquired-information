@@ -10,6 +10,8 @@ import java.util.List;
  */
 public class DeviceReadingsFromGateway {
     private Timestamp gatewayTimestamp;
+    private String gatewayName;
+    private String customerName;
     private List<DeviceData> deviceDataList;
 
     public Timestamp getGatewayTimestamp() {
@@ -18,6 +20,22 @@ public class DeviceReadingsFromGateway {
 
     public void setGatewayTimestamp(Timestamp gatewayTimestamp) {
         this.gatewayTimestamp = gatewayTimestamp;
+    }
+
+    public String getGatewayName() {
+        return gatewayName;
+    }
+
+    public void setGatewayName(String gatewayName) {
+        this.gatewayName = gatewayName;
+    }
+
+    public String getCustomerName() {
+        return customerName;
+    }
+
+    public void setCustomerName(String customerName) {
+        this.customerName = customerName;
     }
 
     public List<DeviceData> getDeviceDataList() {

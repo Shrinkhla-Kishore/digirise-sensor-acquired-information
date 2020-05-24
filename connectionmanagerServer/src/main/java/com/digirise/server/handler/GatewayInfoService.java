@@ -1,4 +1,4 @@
-package com.digirise.server.service;
+package com.digirise.server.handler;
 
 import com.digirise.server.controller.GatewayResponseDTO;
 import com.digirise.server.model.Gateway;

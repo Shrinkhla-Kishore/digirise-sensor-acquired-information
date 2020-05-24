@@ -12,6 +12,11 @@ import java.util.Set;
  * Author: shrinkhlak
  */
 
+@Table(
+        uniqueConstraints=
+        @UniqueConstraint(columnNames={"name", "customerId"})
+)
+
 @Entity
 public class Gateway {
     @Id
@@ -19,6 +24,7 @@ public class Gateway {
     private long gatewayId;
     @ManyToOne
     @JoinColumn(name = "customerId", nullable = false)
+    //@Column(name = "customer_id")
     private Customer customer;
     @NotNull
     private String name;
@@ -26,6 +32,7 @@ public class Gateway {
     private String location;
     @OneToMany (mappedBy = "gateway")
     private Set<Sensor> sensors;
+    private boolean discoveryRequired;
 
 
     public long getGatewayId() {
@@ -76,12 +83,21 @@ public class Gateway {
         this.sensors = sensors;
     }
 
+    public boolean isDiscoveryRequired() {
+        return discoveryRequired;
+    }
+
+    public void setDiscoveryRequired(boolean discoveryRequired) {
+        this.discoveryRequired = discoveryRequired;
+    }
+
     public String toString() {
         StringBuilder gatewayToString = new StringBuilder();
         gatewayToString.append("gatewayId: ").append(gatewayId);
         gatewayToString.append(", Gateway Id: ").append(name);
         gatewayToString.append(", Gateway coordinates: ").append(coordinates);
         gatewayToString.append(", Gateway location: ").append(location);
+        gatewayToString.append(", Discovery required: ").append(discoveryRequired);
         return gatewayToString.toString();
     }
 }

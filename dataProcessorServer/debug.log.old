@@ -1,0 +1,91 @@
+2019-02-27 11:14:17 - 
+
+***************************
+APPLICATION FAILED TO START
+***************************
+
+Description:
+
+Parameter 0 of constructor in com.getinge.connectionmanager.mqtt.Subscriber required a bean of type 'java.lang.String' that could not be found.
+
+
+Action:
+
+Consider defining a bean of type 'java.lang.String' in your configuration.
+
+2019-02-27 11:14:35 - 
+
+***************************
+APPLICATION FAILED TO START
+***************************
+
+Description:
+
+Parameter 0 of constructor in com.getinge.connectionmanager.mqtt.Subscriber required a bean of type 'java.lang.String' that could not be found.
+
+
+Action:
+
+Consider defining a bean of type 'java.lang.String' in your configuration.
+
+2019-02-27 12:01:10 - 
+
+***************************
+APPLICATION FAILED TO START
+***************************
+
+Description:
+
+Parameter 0 of constructor in com.getinge.connectionmanager.mqtt.Subscriber required a bean of type 'java.lang.String' that could not be found.
+
+
+Action:
+
+Consider defining a bean of type 'java.lang.String' in your configuration.
+
+2019-02-27 13:43:47 - 
+
+***************************
+APPLICATION FAILED TO START
+***************************
+
+Description:
+
+Parameter 0 of constructor in com.getinge.connectionmanager.mqtt.Subscriber required a bean of type 'java.lang.String' that could not be found.
+
+
+Action:
+
+Consider defining a bean of type 'java.lang.String' in your configuration.
+
+2019-02-27 13:56:19 - 
+
+***************************
+APPLICATION FAILED TO START
+***************************
+
+Description:
+
+Parameter 0 of constructor in com.getinge.connectionmanager.mqtt.Subscriber required a bean of type 'java.lang.String' that could not be found.
+
+
+Action:
+
+Consider defining a bean of type 'java.lang.String' in your configuration.
+
+2019-02-27 14:09:36 - 
+
+***************************
+APPLICATION FAILED TO START
+***************************
+
+Description:
+
+Parameter 0 of constructor in com.getinge.connectionmanager.mqtt.Subscriber required a bean of type 'java.lang.String' that could not be found.
+
+
+Action:
+
+Consider defining a bean of type 'java.lang.String' in your configuration.
+
+2019-02-27 16:41:09 - 5fd5e137-1762-4153-8ad0-725e3c3991ea-sub: Timed out as no activity, keepAlive=60 000 lastOutboundActivity=1 551 282 009 849 lastInboundActivity=1 551 281 949 857 time=1 551 282 069 850 lastPing=1 551 282 009 849

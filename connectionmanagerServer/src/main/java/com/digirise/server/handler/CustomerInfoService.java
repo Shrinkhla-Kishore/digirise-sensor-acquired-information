@@ -1,4 +1,4 @@
-package com.digirise.server.service;
+package com.digirise.server.handler;
 
 import com.digirise.server.controller.CustomerDTO;
 import com.digirise.server.controller.CustomerResponseDTO;

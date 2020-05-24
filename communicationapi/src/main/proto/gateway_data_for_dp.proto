@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+package com.digirise.proto;
+option java_outer_classname = "GatewayDataForDpProtos";
+
+import public "common_structures.proto";
+
+// Used for gRPC
+message DeviceDataBetweenServers{
+    int64 deviceId = 1;
+    repeated DeviceReadings allReadingsFromDevice = 3;
+    string timestamp = 4;
+}
+
+message DevicesReadingsBetweenServers {
+    string gatewayTimestamp = 1;
+    repeated DeviceDataBetweenServers deviceDataBetweenServers = 2;
+}
+
+service GatewaySensorReadingsService {
+    rpc gatewaySensorReadings(DevicesReadingsBetweenServers) returns (DeviceReadingsResponse);
+}
