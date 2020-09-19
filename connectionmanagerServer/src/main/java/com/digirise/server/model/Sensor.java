@@ -1,6 +1,7 @@
 package com.digirise.server.model;
 
 import javax.persistence.*;
+import java.util.Date;
 
 /**
  * Created by IntelliJ IDEA.
@@ -16,6 +17,7 @@ public class Sensor {
     private String sensorName;
     private String type;
     private String location;
+    private Date createdOn;
     @ManyToOne
     @JoinColumn(name = "gatewayId", nullable = false)
     private Gateway gateway;
@@ -50,6 +52,14 @@ public class Sensor {
 
     public void setLocation(String location) {
         this.location = location;
+    }
+
+    public Date getCreatedOn() {
+        return createdOn;
+    }
+
+    public void setCreatedOn(Date createdOn) {
+        this.createdOn = createdOn;
     }
 
     public Gateway getGateway() {

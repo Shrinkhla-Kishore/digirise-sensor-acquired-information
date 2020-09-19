@@ -30,8 +30,6 @@ public class MessagePublisherManager {
         clientId = new AtomicInteger(1);
         publishersList = new ArrayList<>();
         for (int i=1; i<=1; i++) {
-            String cltId = String.valueOf(this.clientId.getAndIncrement());
-            //MessagePublisher publisher = new MessagePublisher(cltId);
             publisher.startPublisher(mqttBroker);
             s_logger.info("created publisher");
             publishersList.add(publisher);
@@ -39,16 +37,14 @@ public class MessagePublisherManager {
         }
     }
 
-//    @Override
-//    public void run() {
-    public void startPublish() {
+    public void startPublishMessage() {
         try {
             s_logger.info("publishing gateway information");
-            publishGatewayInfo();
+            publishGatewayDiscoveryInfo();
             s_logger.info("Starting to publish alarms");
             while (true) {
                 publishAlarm();
-                Thread.sleep(5000);
+                Thread.sleep(1000); //should be 2000
             }
         }catch (MqttException e) {
             s_logger.warn("{}", e.getMessage());
@@ -65,7 +61,7 @@ public class MessagePublisherManager {
         }
     }
 
-    private void publishGatewayInfo() throws IOException, MqttException {
+    private void publishGatewayDiscoveryInfo() throws IOException, MqttException {
         for(MessagePublisher publisher : publishersList) {
             publisher.sendGatewayDiscoveryInfo();
         }

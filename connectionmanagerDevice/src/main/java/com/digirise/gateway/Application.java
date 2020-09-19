@@ -14,6 +14,7 @@ import org.springframework.context.annotation.PropertySource;
 @PropertySource("classpath:application.properties")
 public class Application {
     private static final Logger s_logger = LoggerFactory.getLogger(Application.class);
+
     public static void main(String[] args) {
         SpringApplication.run(Application.class, args);
         s_logger.info("Started the device connection manager");

@@ -13,9 +13,6 @@ public class ClientHandler {
     @Autowired
     private MessagePublisherManager messageDispatcher;
 
-//    @Autowired
-//    public ClientHandler(MessagePublisherManager messageDispatcher) {
-
     @PostConstruct
     public void startMqtt() {
         s_logger.info("Starting the Client handler");
@@ -27,7 +24,7 @@ public class ClientHandler {
         }
         messageDispatcher.startMqttBroker();
         s_logger.info("After configuring the mqtt client :)");
-        messageDispatcher.startPublish();
+        messageDispatcher.startPublishMessage();
         s_logger.info("After starting the publish of mqtt messages :)");
     }
 }

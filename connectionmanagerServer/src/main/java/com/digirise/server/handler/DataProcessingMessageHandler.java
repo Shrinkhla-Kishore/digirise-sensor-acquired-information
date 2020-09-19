@@ -19,7 +19,11 @@ import com.digirise.server.mqtt.receiver.deserialize.DeviceReadingsFromGatewayDe
 import com.digirise.server.mqtt.receiver.deserialize.DeviceReadingsResponseDeserializer;
 import com.digirise.server.mqtt.receiver.serialize.DeviceReadingsResponseSerializer;
 import com.digirise.server.mqtt.receiver.serialize.DevicesReadingsBetweenServersSerializer;
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import io.grpc.ManagedChannel;
+import org.checkerframework.checker.nullness.compatqual.NullableDecl;
 import org.eclipse.paho.client.mqttv3.MqttClient;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.slf4j.Logger;
@@ -36,7 +40,7 @@ import java.util.List;
  * Date: 2020-05-14
  * Author: shrinkhlak
  */
-public class DataProcessingMessageHandler implements Runnable{
+public class DataProcessingMessageHandler extends DataProcessingHandler implements Runnable{
     public static final Logger s_logger = LoggerFactory.getLogger(DataProcessingMessageHandler.class);
     private Gateway gateway;
     private String gatewayName;
@@ -52,6 +56,7 @@ public class DataProcessingMessageHandler implements Runnable{
     private SubscriberResponse subscriberResponse;
     private boolean gatewayDiscoveryRequired;
     private GatewayDataProtos.DevicesReadingsFromGateway devicesReadingsFromGatewayProto;
+
 
     public DataProcessingMessageHandler(ManagedChannel managedChannel, MqttClient mqttClient, String topic, DatabaseHelper databaseHelper, DeviceReadingsFromGatewayDeserializer deviceReadingsFromGatewayDeserializer,
                                         DevicesReadingsBetweenServersSerializer devicesReadingsBetweenServersSerializer, DeviceReadingsResponseDeserializer deviceReadingsResponseDeserializer,
@@ -80,39 +85,71 @@ public class DataProcessingMessageHandler implements Runnable{
         if (deviceReadingsFromGateway.getDeviceDataList().size() > 0)
             updateDevicesAttachedToGatewayInDatabase(deviceReadingsFromGateway.getDeviceDataList());
 
-        //Create new DeviceReadingsBetweenServer object and send to DP application
+        //Create new DeviceReadingsBetweenServer proto object and send to DP application
         DeviceReadingsBetweenServers deviceReadingsBetweenServers = new DeviceReadingsBetweenServers();
         deviceReadingsBetweenServers.setDeviceDataList(createDeviceReadingsBetweenServer(deviceReadingsFromGateway.getDeviceDataList()));
         deviceReadingsBetweenServers.setGatewayTimestamp(deviceReadingsFromGateway.getGatewayTimestamp());
         GatewayDataForDpProtos.DevicesReadingsBetweenServers devicesReadingsBetweenServersProto = devicesReadingsBetweenServersSerializer.serialize(deviceReadingsBetweenServers);
-        GatewaySensorReadingsServiceGrpc.GatewaySensorReadingsServiceBlockingStub stub = GatewaySensorReadingsServiceGrpc.newBlockingStub(managedChannel);
-        CommnStructuresProtos.DeviceReadingsResponse response = stub.gatewaySensorReadings(devicesReadingsBetweenServersProto);
-        s_logger.info("Response received from GRPC server is {}", response.getStatus());
+        GatewaySensorReadingsServiceGrpc.GatewaySensorReadingsServiceFutureStub stub = GatewaySensorReadingsServiceGrpc.newFutureStub(managedChannel);
+        ListenableFuture<CommnStructuresProtos.DeviceReadingsResponse> response = stub.gatewaySensorReadings(devicesReadingsBetweenServersProto);
+        Futures.addCallback(response, new FutureCallback<CommnStructuresProtos.DeviceReadingsResponse>() {
+            @Override
+            public void onSuccess(@NullableDecl CommnStructuresProtos.DeviceReadingsResponse deviceReadingsResponse) {
+                // De-serializing the response received from Data processing application
+                DeviceReadingsResponse responseFromDPDeserialized = deviceReadingsResponseDeserializer.deserializeResponseBetweenServers(deviceReadingsResponse);
+                if (responseFromDPDeserialized.getResponseStatus() == ResponseStatus.FAILED) {
+                    //TODO: Keep a temporary storage of the readings, to be sent again
+                    responseFromDPDeserialized.setResponseStatus(ResponseStatus.SUCCESS); //Setting it to success for the gateway
+                }
+                if (gatewayDiscoveryRequired)
+                    responseFromDPDeserialized.setResponseStatus(ResponseStatus.SUCCESS_RESEND_DEVICE_DISCOVERY);
+                // Send response back to the gateway
+                s_logger.info("Sending response back to gateway on response topic {}. Response {}", responseTopic, responseFromDPDeserialized.getResponseStatus());
+                CommnStructuresProtos.DeviceReadingsResponse readingResponseProto =
+                        responseToGatewaySerializer.serialize(responseFromDPDeserialized);
+                try {
+                    ByteArrayOutputStream byteOutputStream = new ByteArrayOutputStream();
+                    ObjectOutputStream os = new ObjectOutputStream(byteOutputStream);
+                    os.writeObject(readingResponseProto);
+                    MqttMessage messageToSend = new MqttMessage(byteOutputStream.toByteArray());
+                    MqttMessageWrapper mqttMessageWrapper = new MqttMessageWrapper();
+                    mqttMessageWrapper.setTopic(responseTopic);
+                    mqttMessageWrapper.setMqttMessage(messageToSend);
+                    subscriberResponse.schedule(mqttMessageWrapper);
+                } catch (IOException e) {
+                }
+            }
 
-        // De-serializing the response received from Data processing application
-        DeviceReadingsResponse responseFromDPDeserialized = deviceReadingsResponseDeserializer.deserializeResponseBetweenServers(response);
-        if (responseFromDPDeserialized.getResponseStatus() == ResponseStatus.FAILED) {
-            //TODO: Keep a temporary storage of the readings, to be sent again
-            responseFromDPDeserialized.setResponseStatus(ResponseStatus.SUCCESS); //Setting it to success for the gateway
-        }
-        if (gatewayDiscoveryRequired)
-            responseFromDPDeserialized.setResponseStatus(ResponseStatus.SUCCESS_RESEND_DEVICE_DISCOVERY);
+            @Override
+            public void onFailure(Throwable throwable) {
 
-        // Send response back to the gateway
-        s_logger.info("Sending response back to publisher on response topic {}. Response {}", responseTopic, responseFromDPDeserialized.getResponseStatus());
-        CommnStructuresProtos.DeviceReadingsResponse responseToGatewayProto =
-                responseToGatewaySerializer.serialize(responseFromDPDeserialized);
-        try {
-            ByteArrayOutputStream byteOutputStream = new ByteArrayOutputStream();
-            ObjectOutputStream os = new ObjectOutputStream(byteOutputStream);
-            os.writeObject(responseToGatewayProto);
-            MqttMessage messageToSend = new MqttMessage(byteOutputStream.toByteArray());
-            MqttMessageWrapper mqttMessageWrapper = new MqttMessageWrapper();
-            mqttMessageWrapper.setTopic(responseTopic);
-            mqttMessageWrapper.setMqttMessage(messageToSend);
-            subscriberResponse.schedule(mqttMessageWrapper);
-        } catch (IOException e) {
-        }
+            }
+        }, getDpExecutorService());
+
+//        // De-serializing the response received from Data processing application
+//        DeviceReadingsResponse responseFromDPDeserialized = deviceReadingsResponseDeserializer.deserializeResponseBetweenServers(response);
+//        if (responseFromDPDeserialized.getResponseStatus() == ResponseStatus.FAILED) {
+//            //TODO: Keep a temporary storage of the readings, to be sent again
+//            responseFromDPDeserialized.setResponseStatus(ResponseStatus.SUCCESS); //Setting it to success for the gateway
+//        }
+//        if (gatewayDiscoveryRequired)
+//            responseFromDPDeserialized.setResponseStatus(ResponseStatus.SUCCESS_RESEND_DEVICE_DISCOVERY);
+
+//        // Send response back to the gateway
+//        s_logger.info("Sending response back to publisher on response topic {}. Response {}", responseTopic, responseFromDPDeserialized.getResponseStatus());
+//        CommnStructuresProtos.DeviceReadingsResponse readingResponseProto =
+//                responseToGatewaySerializer.serialize(responseFromDPDeserialized);
+//        try {
+//            ByteArrayOutputStream byteOutputStream = new ByteArrayOutputStream();
+//            ObjectOutputStream os = new ObjectOutputStream(byteOutputStream);
+//            os.writeObject(readingResponseProto);
+//            MqttMessage messageToSend = new MqttMessage(byteOutputStream.toByteArray());
+//            MqttMessageWrapper mqttMessageWrapper = new MqttMessageWrapper();
+//            mqttMessageWrapper.setTopic(responseTopic);
+//            mqttMessageWrapper.setMqttMessage(messageToSend);
+//            subscriberResponse.schedule(mqttMessageWrapper);
+//        } catch (IOException e) {
+//        }
     }
 
     private void updateDevicesAttachedToGatewayInDatabase(List<DeviceData> deviceDataList) {

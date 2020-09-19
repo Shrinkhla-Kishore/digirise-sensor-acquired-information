@@ -16,11 +16,11 @@ message GatewayDiscovery {
     uint64 customerId = 3;
     string coordinates = 4;
     string location = 5;
-    repeated DeviceInfo deviceInfos =6;
+    repeated DeviceInfo deviceInfos =6; //Not implemented in the server side code. Maybe good to have for the future.
     string timestamp = 7;
 }
 
 // Request sent by gateway gateway/<gatewayId>/info/<uuid>
 // GatewayDiscovery message
 // Response sent by server
-// ??
+// message DeviceReadingsResponse

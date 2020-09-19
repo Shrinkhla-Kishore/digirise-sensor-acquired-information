@@ -7,7 +7,7 @@
 //import java.io.ByteArrayOutputStream;
 //
 //public class SubscriberCallback implements MqttCallback {
-//    private static final Logger s_logger = LoggerFactory.getLogger(SubscriberCallback.class);
+//    private static final Logger s_logger = LoggerFactory.getLogger(com.getinge.gateway.mqtt.receiver.SubscriberCallback.class);
 //    private static final String mqttBroker = "tcp://localhost:1884";
 //    @Override
 //    public void connectionLost(Throwable throwable) {

@@ -8,6 +8,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
+import java.sql.Timestamp;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -28,24 +30,61 @@ public class DatabaseHelper {
     @Autowired
     private SensorRepository sensorRepository;
 
-    public void saveGatewayToDatabase(GatewayDiscovery gatewayDiscovery) {
+    @Transactional
+    public boolean saveGatewayToDatabase(GatewayDiscovery gatewayDiscovery){
+        String customerName = gatewayDiscovery.getCustomerName();
+        s_logger.info("Trying to find an existing customer '{}' in database", customerName);
         Optional<Customer> customerFromDB = null;
-        if (gatewayDiscovery.getCustomerId() > 0) {
+        if (customerName != null) {
+            s_logger.info("Finding customer by name {}", customerName);
+            Stream<Customer> customerStream = customerRepository.findCustomersByName(customerName);
+            s_logger.info("Found customer for customer name {}", customerName);
+            customerFromDB = customerStream.findFirst();
+        } else if (gatewayDiscovery.getCustomerId() > 0) {
             customerFromDB = customerRepository.findById(gatewayDiscovery.getCustomerId());
-        } else if (gatewayDiscovery.getCustomerName() != null) {
-            customerFromDB = customerRepository.findCustomersByName(gatewayDiscovery.getCustomerName()).findFirst();
         }
         if (customerFromDB.isPresent()) {
+            s_logger.info("customer object found in DB for customer name {}", customerName);
             Customer customer = customerFromDB.get();
             s_logger.info("gateway discovery message: Valid customer {} found for gateway {}", customer.getName(), gatewayDiscovery.getGatewayName());
-            Gateway gatewayToSave = new Gateway();
-            gatewayToSave.setCustomer(customer);
-            gatewayToSave.setName(gatewayDiscovery.getGatewayName());
-            gatewayToSave.setLocation(gatewayDiscovery.getLocation());
-            gatewayToSave.setCoordinates(gatewayDiscovery.getCoordinates());
-            gatewayToSave.setDiscoveryRequired(false);
-            s_logger.info("Saving gateway {} to database", gatewayToSave.getName());
-            gatewayRepository.save(gatewayToSave);
+            Optional<Gateway> gatewayFromDb = gatewayRepository.findGatewayByName(gatewayDiscovery.getGatewayName(), customerFromDB.get()).findFirst();
+            if (gatewayFromDb.isPresent()) {
+                s_logger.info("Gateway already exists in database. Gateway {}", gatewayFromDb.get().toString());
+                boolean updateGateway = false;
+                Timestamp timestamp = new Timestamp(new Date().getTime());
+                if (!gatewayFromDb.get().getCoordinates().equalsIgnoreCase(gatewayDiscovery.getCoordinates())) {
+                    gatewayFromDb.get().setCoordinates(gatewayDiscovery.getCoordinates());
+                    updateGateway = true;
+                } else if (!gatewayFromDb.get().getLocation().equalsIgnoreCase(gatewayDiscovery.getLocation())) {
+                    gatewayFromDb.get().setLocation(gatewayDiscovery.getLocation());
+                    updateGateway = true;
+                }
+                if (updateGateway) {
+                    gatewayFromDb.get().setLastUpdatedOn(timestamp);
+                }
+                gatewayFromDb.get().setLastConnected(timestamp);
+                gatewayFromDb.get().setDiscoveryRequired(false);
+                gatewayRepository.save(gatewayFromDb.get());
+                //TODO: compare the devices and update devices if necessary.
+            } else {
+                s_logger.info("New gateway {} for customer {}, saving to database", gatewayDiscovery.getGatewayName(), customerFromDB.get().getName());
+                Gateway gatewayToSave = new Gateway();
+                Timestamp timestamp = new Timestamp(new Date().getTime());
+                gatewayToSave.setCustomer(customer);
+                gatewayToSave.setName(gatewayDiscovery.getGatewayName());
+                gatewayToSave.setLocation(gatewayDiscovery.getLocation());
+                gatewayToSave.setCoordinates(gatewayDiscovery.getCoordinates());
+                gatewayToSave.setCreatedOn(timestamp);
+                gatewayToSave.setLastConnected(timestamp);
+                gatewayToSave.setDiscoveryRequired(false);
+                s_logger.info("Saving gateway {} to database", gatewayToSave.getName());
+                gatewayRepository.save(gatewayToSave);
+            }
+            return true;
+        } else {
+            s_logger.error("Customer {}:{} not found for gateway {}", gatewayDiscovery.getCustomerId(),
+                    gatewayDiscovery.getCustomerName(), gatewayDiscovery.getGatewayName());
+            return false;
         }
     }
 

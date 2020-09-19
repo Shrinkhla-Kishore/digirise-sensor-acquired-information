@@ -12,7 +12,6 @@ import org.springframework.stereotype.Component;
 
 import java.sql.Timestamp;
 import java.time.format.DateTimeFormatter;
-import java.util.Date;
 import java.util.List;
 
 /**
@@ -30,7 +29,7 @@ public class DevicesReadingsFromGatewaySerializer {
         s_logger.info("Serializing gatewayReadings ... connected number of devices {}", devicesData.size());
         GatewayDataProtos.DevicesReadingsFromGateway.Builder devicesReadingsFromGatewayProto =
                 GatewayDataProtos.DevicesReadingsFromGateway.newBuilder();
-        Timestamp timestamp = new Timestamp(new Date().getTime());
+        Timestamp timestamp = devicesReadingsFromGateway.getGatewayTimestamp();
         DateTimeFormatter formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
         String timestampAsString = formatter.format(timestamp.toLocalDateTime());
         devicesReadingsFromGatewayProto.setGatewayTimestamp(timestampAsString);
@@ -75,5 +74,4 @@ public class DevicesReadingsFromGatewaySerializer {
         }
         return deviceDataBuilder.build();
     }
-
 }
