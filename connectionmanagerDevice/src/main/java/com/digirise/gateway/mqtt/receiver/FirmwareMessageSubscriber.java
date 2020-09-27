@@ -10,19 +10,18 @@ import org.springframework.stereotype.Component;
 import java.io.ByteArrayOutputStream;
 
 @Component
-public class Subscriber {
-    private static final Logger s_logger = LoggerFactory.getLogger(Subscriber.class);
+public class FirmwareMessageSubscriber {
+    private static final Logger s_logger = LoggerFactory.getLogger(FirmwareMessageSubscriber.class);
     private static final String s_mqttBroker = "tcp://localhost:1884";
     private String clientId;
     private MqttClient mqttClient;
 
-    public Subscriber() {
+    public FirmwareMessageSubscriber() {
         try {
             clientId = "subscriber";
             mqttClient = new MqttClient(s_mqttBroker, clientId);
            // mqttClient.setCallback(new SubscriberCallback());
             mqttClient.connect();
-         //   mqttClient.subscribe("/device/+/alarm");
             mqttClient.subscribe("/gateway/+/firmware", (topic, message) -> {
                 s_logger.info("Sending response back to publisher on topic {}", topic);
                 // Reading the client Id

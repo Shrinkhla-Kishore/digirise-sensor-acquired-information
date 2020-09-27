@@ -1,8 +1,7 @@
-package com.digirise.gateway.mqtt.sender;
+package com.digirise.gateway.mqtt.receiver;
 
 import com.digirise.gateway.ApplicationContextHandler;
-import com.digirise.gateway.mqtt.sender.deserialization.DeviceReadingsResponseDeserializer;
-import com.digirise.gateway.mqtt.sender.serialization.PublisherCallbackFactory;
+import com.digirise.gateway.mqtt.receiver.deserialization.DeviceReadingsResponseDeserializer;
 import com.digirise.proto.CommnStructuresProtos;
 import com.digirise.sai.commons.helper.DeviceReadingsResponse;
 import org.eclipse.paho.client.mqttv3.IMqttMessageListener;
@@ -41,7 +40,7 @@ public class DataMessageCallback implements IMqttMessageListener {
         CommnStructuresProtos.DeviceReadingsResponse responseProto = (CommnStructuresProtos.DeviceReadingsResponse) in.readObject();
         DeviceReadingsResponse response = deviceReadingsResponseDeserializer1.deserializeResponseBetweenServers(responseProto);
         s_logger.info("response is {} and  received is {}", response.toString(), response.getResponseStatus().toString());
-        PublisherCallbackFactory publisherCallbackFactory = ApplicationContextHandler.getBean(PublisherCallbackFactory.class);
+        PublisherMessageResponsesHandler publisherCallbackFactory = ApplicationContextHandler.getBean(PublisherMessageResponsesHandler.class);
         publisherCallbackFactory.responseReceived(uuid);
     }
 

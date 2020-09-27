@@ -1,5 +1,6 @@
-package com.digirise.gateway.mqtt.sender;
+package com.digirise.gateway.mqtt;
 
+import com.digirise.gateway.mqtt.sender.MessagePublisher;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,12 +16,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 @Component
 @PropertySource("classpath:application.properties")
-public class MessagePublisherManager {
-    private static final Logger s_logger = LoggerFactory.getLogger(MessagePublisherManager.class);
+public class MqttMessageConnectionManager {
+    private static final Logger s_logger = LoggerFactory.getLogger(MqttMessageConnectionManager.class);
     @Value("${mqtt.broker}")
     public String mqttBroker;
     @Autowired
-    private MessagePublisher publisher;
+    private MessagePublisher messagePublisher;
 
     private AtomicInteger clientId;
     private List<MessagePublisher> publishersList;
@@ -30,9 +31,9 @@ public class MessagePublisherManager {
         clientId = new AtomicInteger(1);
         publishersList = new ArrayList<>();
         for (int i=1; i<=1; i++) {
-            publisher.startPublisher(mqttBroker);
-            s_logger.info("created publisher");
-            publishersList.add(publisher);
+            messagePublisher.startPublisher(mqttBroker);
+            s_logger.info("created messagePublisher");
+            publishersList.add(messagePublisher);
             s_logger.info("MessagePublisher added");
         }
     }

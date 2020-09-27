@@ -1,5 +1,6 @@
-package com.digirise.dataprocessing.handler;
+package com.digirise.dataprocessing;
 
+import com.digirise.dataprocessing.grpc.GatewaySensorReadingsServiceImpl;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
 import org.slf4j.Logger;

@@ -1,6 +1,5 @@
 package com.digirise.gateway.mqtt;
 
-import com.digirise.gateway.mqtt.sender.MessagePublisherManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -8,10 +7,10 @@ import org.springframework.stereotype.Component;
 import javax.annotation.PostConstruct;
 
 @Component
-public class ClientHandler {
-    private static final Logger s_logger = LoggerFactory.getLogger(ClientHandler.class);
+public class GatewayMqttInitiator {
+    private static final Logger s_logger = LoggerFactory.getLogger(GatewayMqttInitiator.class);
     @Autowired
-    private MessagePublisherManager messageDispatcher;
+    private MqttMessageConnectionManager messagePublisherManager;
 
     @PostConstruct
     public void startMqtt() {
@@ -22,9 +21,9 @@ public class ClientHandler {
             s_logger.warn("The thread was interrupted");
             System.exit(1);
         }
-        messageDispatcher.startMqttBroker();
+        messagePublisherManager.startMqttBroker();
         s_logger.info("After configuring the mqtt client :)");
-        messageDispatcher.startPublishMessage();
+        messagePublisherManager.startPublishMessage();
         s_logger.info("After starting the publish of mqtt messages :)");
     }
 }

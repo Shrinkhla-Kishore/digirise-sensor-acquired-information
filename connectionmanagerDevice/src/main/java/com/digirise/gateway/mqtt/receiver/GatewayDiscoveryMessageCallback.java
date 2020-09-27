@@ -1,13 +1,10 @@
-package com.digirise.gateway.mqtt.sender;
+package com.digirise.gateway.mqtt.receiver;
 
 import com.digirise.gateway.ApplicationContextHandler;
-import com.digirise.gateway.mqtt.sender.deserialization.DeviceReadingsResponseDeserializer;
-import com.digirise.gateway.mqtt.sender.serialization.PublisherCallbackFactory;
+import com.digirise.gateway.mqtt.receiver.deserialization.DeviceReadingsResponseDeserializer;
 import com.digirise.proto.CommnStructuresProtos;
 import com.digirise.sai.commons.helper.DeviceReadingsResponse;
-import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
 import org.eclipse.paho.client.mqttv3.IMqttMessageListener;
-import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,8 +40,8 @@ public class GatewayDiscoveryMessageCallback implements IMqttMessageListener {
         CommnStructuresProtos.DeviceReadingsResponse responseProto = (CommnStructuresProtos.DeviceReadingsResponse) in.readObject();
         DeviceReadingsResponse response = deviceReadingsResponseDeserializer1.deserializeResponseBetweenServers(responseProto);
         s_logger.info("response is {} and  received is {}", response.toString(), response.getResponseStatus().toString());
-        PublisherCallbackFactory publisherCallbackFac = ApplicationContextHandler.getBean(PublisherCallbackFactory.class);
-        publisherCallbackFac.discoveryMessageResponseReceived();
+        PublisherMessageResponsesHandler publisherMessageResponsesHandler = ApplicationContextHandler.getBean(PublisherMessageResponsesHandler.class);
+        publisherMessageResponsesHandler.discoveryMessageResponseReceived();
     }
 
     public void setUuid(UUID uuid) {

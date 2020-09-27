@@ -34,7 +34,7 @@ public class MqttHandler implements Runnable{
     private SubscriberResponse subscriberResponse;
     private boolean stopped = false;
 
-    public MqttHandler(FirmwareDispatcher firmwareDispatcher /*, @org.jetbrains.annotations.NotNull Subscriber subscriber*/) {
+    public MqttHandler(FirmwareDispatcher firmwareDispatcher) {
        // subscriber.configureMqtt();
     }
 
@@ -61,7 +61,7 @@ public class MqttHandler implements Runnable{
     public void run() {
         if (!mqttClient.isConnected()) {
             try {
-                //            Thread.currentThread().sleep(5000);
+                s_logger.info("Trying to connect to MQTT running on {}", s_mqttBroker);
                 mqttClient.connect();
                 s_logger.info("Mqtt subscriber started. Connected to {}", s_mqttBroker);
                 subscriber.setMqttClient(mqttClient);
@@ -70,9 +70,8 @@ public class MqttHandler implements Runnable{
                 subscriber.subscribeDeviceDataTopic();
                 subscriberResponse.setMqttClient(mqttClient);
             } catch (MqttException e) {
+                destroy();
                 s_logger.warn("Error connecting to mqtt broker {}", s_mqttBroker);
-//            } catch (InterruptedException e) {
-//                e.printStackTrace();
             }
         }
     }

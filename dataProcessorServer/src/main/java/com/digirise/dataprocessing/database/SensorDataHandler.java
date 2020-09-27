@@ -1,10 +1,12 @@
 package com.digirise.dataprocessing.database;
 
+import com.digirise.dataprocessing.InfluxDbStarter;
 import com.digirise.sai.commons.helper.DeviceReading;
 import com.digirise.sai.commons.servercommunication.DeviceDataBetweenServers;
 import org.influxdb.InfluxDB;
 import org.influxdb.dto.BatchPoints;
 import org.influxdb.dto.Point;
+import org.influxdb.dto.QueryResult;
 import org.influxdb.impl.InfluxDBMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,6 +41,10 @@ public class SensorDataHandler {
     public void getSensorMeasurements() {
         List<SensorMeasurement> sensorMeasurements = influxDBMapper.query(SensorMeasurement.class);
         s_logger.info("Size of entries in sensor_measurements table is {}", sensorMeasurements.size());
+        for (SensorMeasurement sensorMeasurement : sensorMeasurements) {
+            s_logger.info("measurement is {}, {}, {}, {}, {}", sensorMeasurement.getSensorId(), sensorMeasurement.getSensorName(),
+                    sensorMeasurement.getTime(), sensorMeasurement.getUnit(), sensorMeasurement.getValue());
+        }
     }
 
     public boolean createSensorMeasurement(List<DeviceDataBetweenServers> deviceDataBetweenServersList, Timestamp gatewayTimestamp) {

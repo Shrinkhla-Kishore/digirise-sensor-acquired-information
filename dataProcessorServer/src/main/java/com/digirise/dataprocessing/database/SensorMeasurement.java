@@ -23,7 +23,7 @@ public class SensorMeasurement {
     private String sensorName;
 
     @Column(name = "value")
-    private Long value;
+    private String value;
 
     @Column(name = "unit")
     private String unit;
@@ -52,11 +52,11 @@ public class SensorMeasurement {
         this.sensorName = sensorName;
     }
 
-    public Long getValue() {
+    public String getValue() {
         return value;
     }
 
-    public void setValue(Long value) {
+    public void setValue(String value) {
         this.value = value;
     }
 

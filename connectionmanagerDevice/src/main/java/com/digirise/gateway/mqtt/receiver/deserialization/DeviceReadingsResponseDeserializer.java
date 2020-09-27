@@ -1,4 +1,4 @@
-package com.digirise.gateway.mqtt.sender.deserialization;
+package com.digirise.gateway.mqtt.receiver.deserialization;
 
 import com.digirise.proto.CommnStructuresProtos;
 import com.digirise.sai.commons.helper.DeviceReadingsResponse;

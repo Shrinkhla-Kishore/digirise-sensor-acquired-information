@@ -1,10 +1,9 @@
-package com.digirise.dataprocessing.database;
+package com.digirise.dataprocessing;
 
 import org.influxdb.BatchOptions;
 import org.influxdb.InfluxDB;
 import org.influxdb.InfluxDBFactory;
 import org.influxdb.dto.Pong;
-import org.influxdb.impl.InfluxDBMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -12,7 +11,6 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -54,7 +52,7 @@ public class InfluxDbStarter {
                     influxDB.createDatabase(database);
                     influxDB.setDatabase(database);
                     retentionPolicy = "default";
-                    influxDB.createRetentionPolicy(retentionPolicy, database, "30d", "30m", 1, true);
+                    influxDB.createRetentionPolicy(retentionPolicy, database, "300d", "30m", 1, true);
                     influxDB.setRetentionPolicy(retentionPolicy);
                     BatchOptions batchOptions = BatchOptions.DEFAULTS.actions(100).flushDuration(5000).precision(TimeUnit.MILLISECONDS);
                     influxDB.enableBatch(batchOptions);

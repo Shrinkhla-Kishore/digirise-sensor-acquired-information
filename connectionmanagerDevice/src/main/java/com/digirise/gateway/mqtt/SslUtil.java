@@ -1,4 +1,4 @@
-package com.digirise.gateway.mqtt.sender;
+package com.digirise.gateway.mqtt;
 
 
 import org.bouncycastle.asn1.ASN1InputStream;

@@ -1,4 +1,4 @@
-package com.digirise.dataprocessing.handler;
+package com.digirise.dataprocessing.grpc;
 
 import com.digirise.dataprocessing.database.SensorDataHandler;
 import com.digirise.dataprocessing.deserializer.DeviceReadingsBetweenServersDeserializer;
@@ -55,6 +55,7 @@ public class GatewaySensorReadingsServiceImpl extends GatewaySensorReadingsServi
 //                .append(request.getLastName())
 //                .toString();
 
+        sensorDataHandler.getSensorMeasurements();
         CommnStructuresProtos.ResponseStatus responseStatus;
         if (success)
             responseStatus = CommnStructuresProtos.ResponseStatus.SUCCESS;
