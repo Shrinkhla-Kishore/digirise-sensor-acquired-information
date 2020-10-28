@@ -40,6 +40,8 @@ public class InfluxDbStarter {
     public void connectInfluxDb(){
         try {
             while (true) {
+                s_logger.info("Connecting to Influxdb url {}", url);
+                Thread.currentThread().sleep(20000);
                 influxDB = InfluxDBFactory.connect(url);
                 Pong pingResponse = influxDB.ping();
                 if (pingResponse.getVersion().equalsIgnoreCase("unknown")) {
