@@ -14,16 +14,32 @@ import com.digirise.sai.commons.helper.DeviceReading;
 import com.digirise.sai.commons.helper.ReadingType;
 import com.digirise.sai.commons.readings.DeviceData;
 import com.digirise.sai.commons.readings.DeviceReadingsFromGateway;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.bouncycastle.openssl.PEMDecryptorProvider;
+import org.bouncycastle.openssl.PEMEncryptedKeyPair;
+import org.bouncycastle.openssl.PEMKeyPair;
+import org.bouncycastle.openssl.PEMParser;
+import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
+import org.bouncycastle.openssl.jcajce.JcePEMDecryptorProviderBuilder;
 import org.eclipse.paho.client.mqttv3.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
+import org.springframework.util.FileCopyUtils;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.ObjectOutputStream;
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.TrustManagerFactory;
+import java.io.*;
+import java.security.KeyPair;
+import java.security.KeyStore;
+import java.security.Security;
+import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Date;
@@ -59,6 +75,12 @@ public class MessagePublisher {
     private static final String SUFFIX_DATA_TOPIC = "/data/";
     private static final String SUFFIX_INFO_TOPIC = "/info/";
     private static final String PREFIX_TOPIC = "gateway/";
+    @Value("${ca.certificate}")
+    private Resource caCert;
+    @Value("${client.certificate}")
+    private Resource clientCert;
+    @Value("${client.key}")
+    private Resource clientKey;
     private AtomicInteger alarmId;
     public final int qosLevel = 2;
     private MqttClient mqttClient = null;
@@ -68,7 +90,7 @@ public class MessagePublisher {
         alarmId = new AtomicInteger(40);
     }
 
-    public synchronized void startPublisher(String mqttBroker) {
+    public synchronized void startMqttPublisher(String mqttBroker) {
             s_logger.info("creating publisher with gateway name {}", gatewayName);
             while (mqttClient == null || !mqttClient.isConnected()){
                 try {
@@ -123,7 +145,7 @@ public class MessagePublisher {
             }
         } else {
             s_logger.warn("Mqtt gateway with Id {} not connected", gatewayName);
-            startPublisher(mqttBroker);
+            startMqttPublisher(mqttBroker);
         }
     }
 
@@ -222,14 +244,102 @@ public class MessagePublisher {
         options.setKeepAliveInterval(60);
         options.setConnectionTimeout(300);
       //  options.setAutomaticReconnect(true);
-      //  options.setMqttVersion(MqttConnectOptions.MQTT_VERSION_3_1_1);
+        options.setMqttVersion(MqttConnectOptions.MQTT_VERSION_3_1);
         try {
-//            options.setSocketFactory(SslUtil.getSocketFactory("C:\\Users\\u4015811\\mosquitto_auth\\keys\\ca.crt",
-//                    "C:\\Users\\u4015811\\mosquitto_auth\\keys\\client.crt",
-//                    "C:\\Users\\u4015811\\mosquitto_auth\\keys\\client.key", ""));
+            options.setSocketFactory(getSocketFactory(caCert, clientCert, clientKey, ""));
         } catch (Exception e) {
             s_logger.error("Error in setting the socket factory");
             e.printStackTrace();
         }
     }
+
+    public static String asString(Resource resource) {
+        try {
+            Reader reader = new InputStreamReader(resource.getInputStream());
+            return FileCopyUtils.copyToString(reader);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+
+    private static SSLSocketFactory getSocketFactory(final Resource caCrtFile, final Resource crtFile,
+                                                     final Resource keyFile, final String password)
+            throws Exception {
+        Security.addProvider(new BouncyCastleProvider());
+
+        // load CA certificate
+        X509Certificate caCert = null;
+
+//        FileInputStream fis = new FileInputStream(caCrtFile);
+//        BufferedInputStream bis = new BufferedInputStream(fis);
+        CertificateFactory cf = CertificateFactory.getInstance("X.509");
+
+//        while (bis.available() > 0) {
+//            caCert = (X509Certificate) cf.generateCertificate(bis);
+//            // System.out.println(caCert.toString());
+//        }
+
+        caCert = (X509Certificate) cf.generateCertificate(caCrtFile.getInputStream());
+
+        // load client certificate
+//        bis = new BufferedInputStream(new FileInputStream(crtFile));
+        X509Certificate cert = null;
+//        while (bis.available() > 0) {
+//            cert = (X509Certificate) cf.generateCertificate(bis);
+//            // System.out.println(caCert.toString());
+//        }
+        cert = (X509Certificate) cf.generateCertificate(crtFile.getInputStream());
+
+        // load client private key, or try a pure path to see if that works!!
+        Security.addProvider(new BouncyCastleProvider());
+        String current = new java.io.File( "." ).getCanonicalPath();
+        s_logger.info("Current dir:"+current);
+        String currentDir = System.getProperty("user.dir");
+        s_logger.info("Current dir using System:" +currentDir);
+ //       PEMParser pemParser = new PEMParser(new FileReader(keyFile.getFile().getPath()));
+ //       PEMParser pemParser = new PEMParser(new FileReader("src/main/resources/certs/client.key"));
+        PEMParser pemParser = new PEMParser(new BufferedReader(new InputStreamReader(keyFile.getInputStream())));
+        Object object = pemParser.readObject();
+ //       PEMKeyPair object = (PEMKeyPair) pemParser.readObject();
+        PEMDecryptorProvider decProv = new JcePEMDecryptorProviderBuilder()
+                .build(password.toCharArray());
+        JcaPEMKeyConverter converter = new JcaPEMKeyConverter()
+                .setProvider("BC");
+        KeyPair key;
+        if (object instanceof PEMEncryptedKeyPair) {
+            s_logger.info("Encrypted key - we will use provided password");
+            key = converter.getKeyPair(((PEMEncryptedKeyPair) object)
+                    .decryptKeyPair(decProv));
+        } else {
+            s_logger.info("Unencrypted key - no password needed");
+            key = converter.getKeyPair((PEMKeyPair) object);
+        }
+        pemParser.close();
+
+        // CA certificate is used to authenticate server
+        KeyStore caKs = KeyStore.getInstance(KeyStore.getDefaultType());
+        caKs.load(null, null);
+        caKs.setCertificateEntry("ca-certificate", caCert);
+        TrustManagerFactory tmf = TrustManagerFactory.getInstance("X509");
+        tmf.init(caKs);
+
+        // client key and certificates are sent to server so it can authenticate
+        // us
+        KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
+        ks.load(null, null);
+        ks.setCertificateEntry("certificate", cert);
+        ks.setKeyEntry("private-key", key.getPrivate(), password.toCharArray(),
+                new java.security.cert.Certificate[] { cert });
+        KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory
+                .getDefaultAlgorithm());
+        kmf.init(ks, password.toCharArray());
+
+        // finally, create SSL socket factory
+        SSLContext context = SSLContext.getInstance("TLSv1.2");
+        context.init(kmf.getKeyManagers(), tmf.getTrustManagers(), null);
+
+        return context.getSocketFactory();
+    }
+
 }

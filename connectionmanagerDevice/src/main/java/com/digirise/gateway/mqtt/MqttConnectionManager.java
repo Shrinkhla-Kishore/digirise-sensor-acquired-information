@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.PostConstruct;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -16,8 +17,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 @Component
 @PropertySource("classpath:application.properties")
-public class MqttMessageConnectionManager {
-    private static final Logger s_logger = LoggerFactory.getLogger(MqttMessageConnectionManager.class);
+// MqttConnectionManager
+public class MqttConnectionManager {
+    private static final Logger s_logger = LoggerFactory.getLogger(MqttConnectionManager.class);
     @Value("${mqtt.broker}")
     public String mqttBroker;
     @Autowired
@@ -26,12 +28,27 @@ public class MqttMessageConnectionManager {
     private AtomicInteger clientId;
     private List<MessagePublisher> publishersList;
 
+    @PostConstruct
+    public void startMqtt() {
+        s_logger.info("Starting the Client handler");
+        try {
+            Thread.currentThread().sleep(5000);
+        } catch (InterruptedException e) {
+            s_logger.warn("The thread was interrupted");
+            System.exit(1);
+        }
+        this.startMqttBroker();
+        s_logger.info("After configuring the mqtt client :)");
+        this.startPublishMessage();
+        s_logger.info("After starting the publish of mqtt messages :)");
+    }
+
     public void startMqttBroker() {
         s_logger.info("Inside startMqttBroker, Mqtt broker is {}", mqttBroker);
         clientId = new AtomicInteger(1);
         publishersList = new ArrayList<>();
         for (int i=1; i<=1; i++) {
-            messagePublisher.startPublisher(mqttBroker);
+            messagePublisher.startMqttPublisher(mqttBroker);
             s_logger.info("created messagePublisher");
             publishersList.add(messagePublisher);
             s_logger.info("MessagePublisher added");
