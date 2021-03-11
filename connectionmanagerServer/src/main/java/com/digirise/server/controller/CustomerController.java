@@ -11,6 +11,8 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 /**
+ * CustomerController is the ReST endpoint which could be used to create and manage
+ * customer related information which gets stored in SQL database.
  * Created by IntelliJ IDEA.
  * Date: 2020-05-05
  * Author: shrinkhlak
@@ -44,5 +46,16 @@ public class CustomerController {
     public ResponseEntity<List<CustomerResponseDTO>> getCustomerInfoByName(@PathVariable String customerName){
         List<CustomerResponseDTO> customerResponseDTOs = customerInfoService.getCustomerInformationByName(customerName);
         return new ResponseEntity<List<CustomerResponseDTO>>(customerResponseDTOs, HttpStatus.OK);
+    }
+
+    @PostMapping(path = "/update")
+    public ResponseEntity<Void> updateCustomer(@RequestBody CustomerDTO customerDTO) {
+        //TODO: Define update method to update an existing customer
+        if (customerDTO != null) {
+            s_logger.info("Received customer with name {}, {}, {}", customerDTO.getCustomerName(), customerDTO.getBillingAddress(), customerDTO.getLocation());
+            customerInfoService.createCustomer(customerDTO);
+        }
+        ResponseEntity<Void> responseEntity = new ResponseEntity<>(HttpStatus.ACCEPTED);
+        return responseEntity;
     }
 }

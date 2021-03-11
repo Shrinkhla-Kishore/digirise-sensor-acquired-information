@@ -1,5 +1,7 @@
 package com.digirise.server.model;
 
+import com.digirise.sai.commons.helper.DeviceType;
+
 import javax.persistence.*;
 import java.util.Date;
 
@@ -15,7 +17,8 @@ public class Sensor {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private long sensorId;
     private String sensorName;
-    private String type;
+    @Enumerated(EnumType.ORDINAL)
+    private DeviceType type;
     private String location;
     private Date createdOn;
     @ManyToOne
@@ -38,11 +41,11 @@ public class Sensor {
         this.sensorName = sensorName;
     }
 
-    public String getType() {
+    public DeviceType getType() {
         return type;
     }
 
-    public void setType(String type) {
+    public void setType(DeviceType type) {
         this.type = type;
     }
 

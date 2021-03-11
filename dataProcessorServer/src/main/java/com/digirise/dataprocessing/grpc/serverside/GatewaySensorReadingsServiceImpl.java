@@ -1,9 +1,9 @@
-package com.digirise.dataprocessing.grpc;
+package com.digirise.dataprocessing.grpc.serverside;
 
 import com.digirise.dataprocessing.database.SensorDataHandler;
 import com.digirise.dataprocessing.deserializer.DeviceReadingsBetweenServersDeserializer;
-import com.digirise.proto.CommnStructuresProtos;
-import com.digirise.proto.GatewayDataForDpProtos;
+import com.digirise.proto.CommonStructuresProto;
+import com.digirise.proto.GatewayDataForDpProto;
 import com.digirise.proto.GatewaySensorReadingsServiceGrpc;
 import com.digirise.sai.commons.helper.DeviceReading;
 import com.digirise.sai.commons.servercommunication.DeviceDataBetweenServers;
@@ -21,7 +21,8 @@ import org.springframework.stereotype.Service;
  */
 
 @Service
-public class GatewaySensorReadingsServiceImpl extends GatewaySensorReadingsServiceGrpc.GatewaySensorReadingsServiceImplBase {
+public class GatewaySensorReadingsServiceImpl extends
+        GatewaySensorReadingsServiceGrpc.GatewaySensorReadingsServiceImplBase {
     public static final Logger s_logger = LoggerFactory.getLogger(GatewaySensorReadingsServiceImpl.class);
     @Autowired
     private DeviceReadingsBetweenServersDeserializer deviceReadingsBetweenServersDeserializer;
@@ -30,8 +31,8 @@ public class GatewaySensorReadingsServiceImpl extends GatewaySensorReadingsServi
 
     @Override
     public void gatewaySensorReadings(
-            GatewayDataForDpProtos.DevicesReadingsBetweenServers devicesReadingsBetweenServersProto,
-            StreamObserver<CommnStructuresProtos.DeviceReadingsResponse> responseObserver){
+            GatewayDataForDpProto.DevicesReadingsBetweenServers devicesReadingsBetweenServersProto,
+            StreamObserver<CommonStructuresProto.DeviceReadingsResponse> responseObserver){
 
         s_logger.info("message received over gRPC is {}", devicesReadingsBetweenServersProto);
         s_logger.info("deserializer is {}, sensorDataHandler is {}", deviceReadingsBetweenServersDeserializer, sensorDataHandler);
@@ -56,13 +57,13 @@ public class GatewaySensorReadingsServiceImpl extends GatewaySensorReadingsServi
 //                .toString();
 
         sensorDataHandler.getSensorMeasurements();
-        CommnStructuresProtos.ResponseStatus responseStatus;
+        CommonStructuresProto.ResponseStatus responseStatus;
         if (success)
-            responseStatus = CommnStructuresProtos.ResponseStatus.SUCCESS;
+            responseStatus = CommonStructuresProto.ResponseStatus.SUCCESS;
         else
-            responseStatus = CommnStructuresProtos.ResponseStatus.FAILED;
+            responseStatus = CommonStructuresProto.ResponseStatus.FAILED;
 
-        CommnStructuresProtos.DeviceReadingsResponse responseProto = CommnStructuresProtos.DeviceReadingsResponse.newBuilder()
+        CommonStructuresProto.DeviceReadingsResponse responseProto = CommonStructuresProto.DeviceReadingsResponse.newBuilder()
                 .setStatus(responseStatus).build();
 
         responseObserver.onNext(responseProto);

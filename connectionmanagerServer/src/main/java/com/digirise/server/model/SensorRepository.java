@@ -11,4 +11,7 @@ import java.util.stream.Stream;
 public interface SensorRepository extends CrudRepository<Sensor, Long> {
     @Query("select ss from Sensor ss where ss.sensorName = :name and ss.gateway = :gateway")
     public Stream<Sensor> findSensorByNameAndGateway(@Param("name") String name, @Param("gateway") Gateway gatewayId);
+
+    @Query("select ss from Sensor ss where ss.gateway = :gateway")
+    public Stream<Sensor> findAllSensorByGatewayId(@Param("gateway") Gateway gateway);
 }

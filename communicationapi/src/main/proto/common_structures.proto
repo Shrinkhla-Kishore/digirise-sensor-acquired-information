@@ -2,12 +2,13 @@ syntax = "proto3";
 
 package com.digirise.proto;
 
-option java_outer_classname = "CommnStructuresProtos";
+option java_outer_classname = "CommonStructuresProto";
 
 enum DeviceType {
     TEMPERATURE_SENSOR = 0;
     MOTION_SENSOR = 1;
     HUMIDITY_SENSOR = 2;
+    LIGHT_SENSOR = 3;
 }
 
 enum ReadingType {

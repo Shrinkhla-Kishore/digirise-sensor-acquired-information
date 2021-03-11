@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+package com.digirise.proto.frontendmessages;
+option java_outer_classname = "GatewaysInfoProto";
+
+// gRPC request
+message GatewaysInfoRequest {
+    int64 customerId = 1;
+}
+
+// gRPC response
+message GatewaysInfoResponse {
+    repeated GatewayInfo gatewayInfo = 1;
+}
+
+message GatewayInfo {
+    int64 gatewayId = 1;
+    string name = 2;
+    string location = 3;
+    string coordinates = 4;
+    bool discoveryRequired = 5;
+    string createdOn = 6;
+    string lastConnectedOn = 7;
+    string lastUpdatedOn = 8;
+}
+
+//gRPC service
+service GatewaysInformationService {
+    rpc getGatewaysInformation(GatewaysInfoRequest) returns (GatewaysInfoResponse);
+}

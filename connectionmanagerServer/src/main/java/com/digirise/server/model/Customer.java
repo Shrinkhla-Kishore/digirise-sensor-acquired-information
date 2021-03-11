@@ -1,7 +1,5 @@
 package com.digirise.server.model;
 
-import org.hibernate.validator.constraints.UniqueElements;
-
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import java.util.Date;
@@ -19,12 +17,14 @@ public class Customer {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private long customerId;
     @NotNull
-    @UniqueElements
+    //@UniqueElements
+    @Column(unique = true)
     private String name;
     @NotNull
     private Date startDate;
     private String location;
     private String billingAddress;
+    private Date contractExpiryDate;
     @OneToMany (mappedBy = "customer")
     private Set<Gateway> gateways;
 
@@ -68,6 +68,14 @@ public class Customer {
         this.billingAddress = billingAddress;
     }
 
+    public Date getContractExpiryDate() {
+        return contractExpiryDate;
+    }
+
+    public void setContractExpiryDate(Date contractExpiryDate) {
+        this.contractExpiryDate = contractExpiryDate;
+    }
+
     public Set<Gateway> getGateways() {
         return gateways;
     }
@@ -83,6 +91,7 @@ public class Customer {
         customerAsString.append(", Start Date: ").append(startDate.toString());
         customerAsString.append(", Location of installation: ").append(location);
         customerAsString.append(", Billing Address: ").append(billingAddress);
+        customerAsString.append(", Contract Expiry Date: ").append(contractExpiryDate);
         return customerAsString.toString();
     }
 }

@@ -3,12 +3,12 @@ package com.digirise.gateway.mqtt.sender;
 import com.digirise.gateway.ApplicationContextHandler;
 import com.digirise.gateway.mqtt.receiver.DataMessageCallback;
 import com.digirise.gateway.mqtt.receiver.GatewayDiscoveryMessageCallback;
-import com.digirise.gateway.mqtt.receiver.deserialization.DeviceReadingsResponseDeserializer;
 import com.digirise.gateway.mqtt.sender.serialization.DevicesReadingsFromGatewaySerializer;
 import com.digirise.gateway.mqtt.sender.serialization.GatewayDiscoverySerializer;
 import com.digirise.gateway.mqtt.receiver.PublisherMessageResponsesHandler;
-import com.digirise.proto.GatewayDataProtos;
-import com.digirise.proto.GatewayDiscoveryProtos;
+import com.digirise.proto.GatewayDataProto;
+import com.digirise.proto.GatewayDiscoveryProto;
+import com.digirise.sai.commons.deserializer.DeviceReadingsResponseDeserializer;
 import com.digirise.sai.commons.discovery.GatewayDiscovery;
 import com.digirise.sai.commons.helper.DeviceReading;
 import com.digirise.sai.commons.helper.ReadingType;
@@ -48,6 +48,10 @@ import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
+ * MessagePublisher sets up the connection to towards the received mqtt broker url.
+ * This class also handles creating and dispatching the request message for the
+ * gateway discovery message and the gateway data message.
+ * It also sets up to subscribe to the response messages
  * Created by IntelliJ IDEA.
  * Date: 2019-02-24
  * Author: shrinkhlak
@@ -133,7 +137,7 @@ public class MessagePublisher {
                 deviceReadingsFromGateway.setGatewayName(gatewayName);
                 deviceReadingsFromGateway.setGatewayTimestamp(new Timestamp(new Date().getTime()));
                 deviceReadingsFromGateway.setDeviceDataList(fakeDevicesData);
-                GatewayDataProtos.DevicesReadingsFromGateway gatewayReadings = devicesReadingsFromGatewaySerializer.serializeDevicesData(deviceReadingsFromGateway);
+                GatewayDataProto.DevicesReadingsFromGateway gatewayReadings = devicesReadingsFromGatewaySerializer.serializeDevicesData(deviceReadingsFromGateway);
                 publishInformation(gatewayReadings,alarm_topic);
 
                 DataMessageCallback callback = new DataMessageCallback((DeviceReadingsResponseDeserializer) ApplicationContextHandler.getBean(DeviceReadingsResponseDeserializer.class));
@@ -165,7 +169,7 @@ public class MessagePublisher {
         gatewayDiscovery.setLocation(gatewayLocation);
         gatewayDiscovery.setCoordinates(gatewayCoordinates);
         //TODO: Check if there is any device connected
-        GatewayDiscoveryProtos.GatewayDiscovery gatewayDiscoveryProto =
+        GatewayDiscoveryProto.GatewayDiscovery gatewayDiscoveryProto =
                 gatewayDiscoverySerializer.serializeGatewayDiscovery(gatewayDiscovery);
         UUID uuid = UUID.randomUUID();
         String gatewayInfoTopic = PREFIX_TOPIC + gatewayName + SUFFIX_INFO_TOPIC + uuid;
@@ -178,8 +182,8 @@ public class MessagePublisher {
         subscribeResponse(gatewayInfoTopic, callback);
     }
 
-    public GatewayDataProtos.DevicesReadingsFromGateway serializeDeviceReadingsFromGateway(DeviceReadingsFromGateway deviceReadingsFromGateway){
-        GatewayDataProtos.DevicesReadingsFromGateway deviceReadingsFromGatewayProto =
+    public GatewayDataProto.DevicesReadingsFromGateway serializeDeviceReadingsFromGateway(DeviceReadingsFromGateway deviceReadingsFromGateway){
+        GatewayDataProto.DevicesReadingsFromGateway deviceReadingsFromGatewayProto =
                 devicesReadingsFromGatewaySerializer.serializeDevicesData(deviceReadingsFromGateway);
         return deviceReadingsFromGatewayProto;
     }
@@ -299,7 +303,9 @@ public class MessagePublisher {
         s_logger.info("Current dir using System:" +currentDir);
  //       PEMParser pemParser = new PEMParser(new FileReader(keyFile.getFile().getPath()));
  //       PEMParser pemParser = new PEMParser(new FileReader("src/main/resources/certs/client.key"));
-        PEMParser pemParser = new PEMParser(new BufferedReader(new InputStreamReader(keyFile.getInputStream())));
+        s_logger.info("Key file is {}", keyFile);
+        BufferedReader br = new BufferedReader(new InputStreamReader(keyFile.getInputStream()));
+        PEMParser pemParser = new PEMParser(br);
         Object object = pemParser.readObject();
  //       PEMKeyPair object = (PEMKeyPair) pemParser.readObject();
         PEMDecryptorProvider decProv = new JcePEMDecryptorProviderBuilder()
@@ -313,7 +319,8 @@ public class MessagePublisher {
                     .decryptKeyPair(decProv));
         } else {
             s_logger.info("Unencrypted key - no password needed");
-            key = converter.getKeyPair((PEMKeyPair) object);
+            PEMKeyPair pemKeyPair = (PEMKeyPair) object;
+            key = converter.getKeyPair(pemKeyPair);
         }
         pemParser.close();
 

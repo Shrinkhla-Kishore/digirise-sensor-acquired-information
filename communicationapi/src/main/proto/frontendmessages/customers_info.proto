@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+package com.digirise.proto.frontendmessages;
+option java_outer_classname = "CustomersInfoProto";
+
+// gRPC request
+message CustomersInfoRequest {
+    bool allCustomers = 1;
+    int64 customerId = 2;
+}
+
+// gRPC response
+message CustomersInfoResponse {
+    repeated CustomerInfo customerInfo = 1;
+}
+
+message CustomerInfo {
+    int64 customerId = 1;
+    string name = 2;
+    string billingAddress = 3;
+    string location = 4;
+    string startDate = 5;
+    string contractExpiryDate = 6;
+    int32 totalNumberOfGateways = 7;
+    int32 totalNumberOfSensors = 8;
+}
+
+service CustomersInformationService {
+    rpc getCustomersInformation (CustomersInfoRequest) returns (CustomersInfoResponse);
+}
+
+

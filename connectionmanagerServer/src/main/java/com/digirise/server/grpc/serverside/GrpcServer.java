@@ -1,6 +1,5 @@
-package com.digirise.dataprocessing;
+package com.digirise.server.grpc.serverside;
 
-import com.digirise.dataprocessing.grpc.GatewaySensorReadingsServiceImpl;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
 import org.slf4j.Logger;
@@ -14,37 +13,44 @@ import java.io.IOException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-/**
+/** GrpcServer class builds and starts the GRPC server
  * Created by IntelliJ IDEA.
- * Date: 2020-05-15
+ * Date: 2021-01-06
  * Author: shrinkhlak
  */
 @Component
 public class GrpcServer implements Runnable {
     public static final Logger s_logger = LoggerFactory.getLogger(GrpcServer.class);
     private Server grpcServer;
-    @Value("${server.grpc.port}")
+    @Value("${grpc.server.port}")
     private String grpcPort;
     @Autowired
-    private GatewaySensorReadingsServiceImpl gatewaySensorReadingsService;
+    private CustomersInformationServiceImpl customersInformationService;
+    @Autowired
+    private GatewaysInformationServiceImpl gatewaysInformationService;
+    @Autowired
+    private SensorsInformationServiceImpl sensorsInformationService;
     private static ExecutorService grpcExecutor = Executors.newSingleThreadExecutor();
 
     @PostConstruct
     public void setUpGrpCServer(){
-        s_logger.info("Staring gRPC on port {}", grpcPort);
+        s_logger.info("Staring gRPC server for handling frontend requests on port {}", grpcPort);
         grpcExecutor.submit(this);
     }
 
     @Override
     public void run() {
         try {
-            s_logger.info("Staring gRPC on port {}", grpcPort);
-            grpcServer = ServerBuilder.forPort(Integer.parseInt(grpcPort)).addService(gatewaySensorReadingsService).build();
+                s_logger.info("Staring gRPC on port {} for handling requests from the data processor", grpcPort);
+            grpcServer = ServerBuilder.forPort(Integer.parseInt(grpcPort)).addService(customersInformationService)
+                    .addService(gatewaysInformationService).addService(sensorsInformationService).build();
             grpcServer.start();
             grpcServer.awaitTermination();
-            s_logger.info("gRPC server started successfully");
+            if (!grpcServer.isShutdown() && !grpcServer.isTerminated())
+                s_logger.info("gRPC server started successfully");
         } catch (IOException e) {
         } catch (InterruptedException e){
+            grpcServer.shutdownNow();
         }
     }
 

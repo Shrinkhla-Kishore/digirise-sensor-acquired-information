@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+package com.digirise.proto.frontendmessages;
+option java_outer_classname = "SensorsInfoProto";
+
+//import public "src/main/proto/common_structures.proto";
+import public "common_structures.proto";
+
+// gRPC request
+message SensorsInfoRequest {
+    int64 gatewayId = 1;
+}
+
+// gRPC response
+message SensorsInfoResponse {
+    repeated SensorInfo sensorInfo = 1;
+}
+
+message SensorInfo {
+    int64 sensorId = 1;
+    string name = 2;
+    string location = 3;
+    DeviceType deviceType = 4;
+    string createdOn = 5;
+}
+
+//gRPC service
+service SensorsInformationService {
+    rpc getSensorsInformation (SensorsInfoRequest) returns (SensorsInfoResponse);
+}

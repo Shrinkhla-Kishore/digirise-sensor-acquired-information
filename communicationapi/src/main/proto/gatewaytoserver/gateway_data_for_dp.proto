@@ -1,8 +1,9 @@
 syntax = "proto3";
 
 package com.digirise.proto;
-option java_outer_classname = "GatewayDataForDpProtos";
+option java_outer_classname = "GatewayDataForDpProto";
 
+// import public "src/main/proto/common_structures.proto";
 import public "common_structures.proto";
 
 // Used for gRPC

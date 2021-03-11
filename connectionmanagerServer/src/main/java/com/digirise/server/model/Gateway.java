@@ -1,7 +1,5 @@
 package com.digirise.server.model;
 
-import org.hibernate.validator.constraints.UniqueElements;
-
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import java.util.Date;

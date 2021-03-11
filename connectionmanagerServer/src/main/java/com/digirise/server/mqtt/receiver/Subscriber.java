@@ -1,19 +1,19 @@
 package com.digirise.server.mqtt.receiver;
 
-import com.digirise.proto.CommnStructuresProtos;
-import com.digirise.proto.GatewayDataProtos;
-import com.digirise.proto.GatewayDiscoveryProtos;
+import com.digirise.proto.CommonStructuresProto;
+import com.digirise.proto.GatewayDataProto;
+import com.digirise.proto.GatewayDiscoveryProto;
+import com.digirise.sai.commons.deserializer.DeviceReadingsResponseDeserializer;
 import com.digirise.sai.commons.discovery.GatewayDiscovery;
 import com.digirise.sai.commons.helper.DeviceReadingsResponse;
 import com.digirise.sai.commons.helper.ResponseStatus;
-import com.digirise.server.handler.DataProcessingGrpcClient;
-import com.digirise.server.handler.DataProcessingMessageHandler;
-import com.digirise.server.handler.DatabaseHelper;
-import com.digirise.server.handler.MqttMessageWrapper;
+import com.digirise.sai.commons.serializer.DeviceReadingsResponseSerializer;
+import com.digirise.server.grpc.clientside.DataProcessingGrpcClient;
+import com.digirise.server.grpc.clientside.DataProcessingHandler;
+import com.digirise.server.grpc.clientside.DataProcessingMessageHandler;
+import com.digirise.server.handler.*;
 import com.digirise.server.mqtt.receiver.deserialize.DeviceReadingsFromGatewayDeserializer;
-import com.digirise.server.mqtt.receiver.deserialize.DeviceReadingsResponseDeserializer;
 import com.digirise.server.mqtt.receiver.deserialize.GatewayDiscoveryDeserializer;
-import com.digirise.server.mqtt.receiver.serialize.DeviceReadingsResponseSerializer;
 import com.digirise.server.mqtt.receiver.serialize.DevicesReadingsBetweenServersSerializer;
 import org.eclipse.paho.client.mqttv3.MqttClient;
 import org.eclipse.paho.client.mqttv3.MqttException;
@@ -30,6 +30,12 @@ import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+
+/**
+ * Subscriber class subscribes to the MQTT discovery topic that gateway uses to
+ * send the gateway discovery message. It also subscribes to the data topic that is used
+ * by the gateway to send data messages.
+ */
 
 @Component
 public class Subscriber {
@@ -52,6 +58,8 @@ public class Subscriber {
     private DeviceReadingsResponseSerializer deviceReadingsResponseSerializer;
     @Autowired
     private DatabaseHelper databaseHelper;
+    @Autowired
+    private DataProcessingHandler dataProcessingHandler;
     @Autowired
     private DataProcessingGrpcClient dataProcessingGrpcClient;
     @Autowired
@@ -85,7 +93,7 @@ public class Subscriber {
                         }
                         ByteArrayInputStream bis = new ByteArrayInputStream(message.getPayload());
                         ObjectInput in = new ObjectInputStream(bis);
-                        GatewayDiscoveryProtos.GatewayDiscovery gatewayDiscoveryProto = (GatewayDiscoveryProtos.GatewayDiscovery) in.readObject();
+                        GatewayDiscoveryProto.GatewayDiscovery gatewayDiscoveryProto = (GatewayDiscoveryProto.GatewayDiscovery) in.readObject();
 
                         GatewayDiscovery gatewayDiscovery = gatewayDiscoveryDeserializer.deserializeGatewayDiscovery(gatewayDiscoveryProto);
                         s_logger.info("GatewayDiscovery message contains gatewayName {}, customerName {}, customerId {}, location {}, coordinates {}, timestamp {} ",
@@ -100,7 +108,7 @@ public class Subscriber {
                         else
                             response.setResponseStatus(ResponseStatus.FAILED);
 
-                        CommnStructuresProtos.DeviceReadingsResponse readingResponseProto =
+                        CommonStructuresProto.DeviceReadingsResponse readingResponseProto =
                                 deviceReadingsResponseSerializer.serialize(response);
                         ByteArrayOutputStream byteOutputStream = new ByteArrayOutputStream();
                         ObjectOutputStream os = new ObjectOutputStream(byteOutputStream);
@@ -134,39 +142,19 @@ public class Subscriber {
                         s_logger.info("SENSOR DATA RECEIVED FROM GATEWAY {}, message Id: {}", gatewayId, message.getId());
                         if (!deviceConnectedClients.contains(gatewayId)) {
                             deviceConnectedClients.add(gatewayId);
-                            s_logger.trace("Added new client {} to connected Device list", gatewayId);
+                            s_logger.trace("Added new gateway {} to connected Device list", gatewayId);
                         }
                         ByteArrayInputStream bis = new ByteArrayInputStream(message.getPayload());
                         ObjectInput in = new ObjectInputStream(bis);
-                        GatewayDataProtos.DevicesReadingsFromGateway gatewayReadingsProtobuf = (GatewayDataProtos.DevicesReadingsFromGateway) in.readObject();
+                        GatewayDataProto.DevicesReadingsFromGateway gatewayReadingsProtobuf = (GatewayDataProto.DevicesReadingsFromGateway) in.readObject();
 
                         // Sending gateway readings to Data Processing application
-                        DataProcessingMessageHandler dataProcessingMessageHandler = new DataProcessingMessageHandler(dataProcessingGrpcClient.getManagedChannel(), mqttClient,
-                                topic, databaseHelper, deviceReadingsFromGatewayDeserializer, devicesReadingsBetweenServersSerializer, deviceReadingsResponseDeserializer,
-                                deviceReadingsResponseSerializer, subscriberResponse, gatewayReadingsProtobuf);
+                        DataProcessingMessageHandler dataProcessingMessageHandler = new DataProcessingMessageHandler(dataProcessingGrpcClient.getManagedChannel(), topic, dataProcessingHandler,
+                                deviceReadingsFromGatewayDeserializer, devicesReadingsBetweenServersSerializer, deviceReadingsResponseDeserializer, gatewayReadingsProtobuf);
                         deviceDataHandlerPool.execute(dataProcessingMessageHandler);
-                   //     dataProcessingMessageHandler.handleMessage(gatewayReadingsProtobuf);
-                        s_logger.info("GatewayReadings disptached for furthur handling");
-
-                        //TODO: Send a response back to the gateway device !!!
-                        String responseTopic = topic + "/response";
-                        sendResponseToGateway(true, responseTopic);
-//
-//                        DeviceReadingsResponseToGateway responseToGateway = new DeviceReadingsResponseToGateway();
-//                        responseToGateway.setResponseStatus(responseFromDPDeserialized.getResponseStatus());
-//                        s_logger.info("Sending response back to publisher on response topic {}. Response {}", responseTopic, responseToGateway.getResponseStatus());
-//                        GatewayDataProtos.DeviceReadingsResponseToGateway responseToGatewayProto =
-//                                deviceReadingsResponseSerializer.serialize(responseToGateway);
-//                        ByteArrayOutputStream byteOutputStream = new ByteArrayOutputStream();
-//                        ObjectOutputStream os = new ObjectOutputStream(byteOutputStream);
-//                        os.writeObject(responseToGatewayProto);
-//                        MqttMessage messageToSend = new MqttMessage(byteOutputStream.toByteArray());
-
-//                        mqttClient.publish(responseTopic, messageToSend);
-//                        s_logger.info("Response sent on response topic {} successfully", responseTopic);
+                        s_logger.info("GatewayReadings dispatched for furthur handling");
                     } else {
                         s_logger.warn("Server application lost connection to broker {}", s_mqttBroker);
-                //        configureMqtt();
                     }
                 });
             } else {
@@ -185,7 +173,7 @@ public class Subscriber {
         else
             response.setResponseStatus(ResponseStatus.FAILED);
 
-        CommnStructuresProtos.DeviceReadingsResponse readingResponseProto =
+        CommonStructuresProto.DeviceReadingsResponse readingResponseProto =
                 deviceReadingsResponseSerializer.serialize(response);
         ByteArrayOutputStream byteOutputStream = new ByteArrayOutputStream();
         ObjectOutputStream os = new ObjectOutputStream(byteOutputStream);

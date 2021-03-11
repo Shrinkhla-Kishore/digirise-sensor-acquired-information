@@ -1,12 +1,10 @@
-package com.digirise.gateway.mqtt;
+package com.digirise.gateway.mqtt.sender;
 
-import com.digirise.gateway.mqtt.sender.MessagePublisher;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.PropertySource;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
@@ -15,9 +13,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
+/**
+ * MqttConnectionManager class is used to read the mqtt broker url and start the mqtt broker by calling
+ * the @MessagePublisher class.
+ * Currently it initiates a gateway discovery message to be sent on the system start-up.
+ * Currently it sends one gateway data message per second. This should be handled correctly in future.
+ */
+
 @Component
-@PropertySource("classpath:application.properties")
-// MqttConnectionManager
 public class MqttConnectionManager {
     private static final Logger s_logger = LoggerFactory.getLogger(MqttConnectionManager.class);
     @Value("${mqtt.broker}")
@@ -43,7 +46,7 @@ public class MqttConnectionManager {
         s_logger.info("After starting the publish of mqtt messages :)");
     }
 
-    public void startMqttBroker() {
+    private void startMqttBroker() {
         s_logger.info("Inside startMqttBroker, Mqtt broker is {}", mqttBroker);
         clientId = new AtomicInteger(1);
         publishersList = new ArrayList<>();
@@ -55,7 +58,7 @@ public class MqttConnectionManager {
         }
     }
 
-    public void startPublishMessage() {
+    private void startPublishMessage() {
         try {
             s_logger.info("publishing gateway information");
             publishGatewayDiscoveryInfo();
@@ -101,4 +104,8 @@ public class MqttConnectionManager {
     public List<MessagePublisher> getPublisherList(){
             return publishersList;
         }
+
+    public void setMqttBroker(String mqttBroker) {
+        this.mqttBroker = mqttBroker;
+    }
 }

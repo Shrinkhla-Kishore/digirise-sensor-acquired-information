@@ -1,7 +1,7 @@
 package com.digirise.gateway.mqtt.sender.serialization;
 
-import com.digirise.proto.CommnStructuresProtos;
-import com.digirise.proto.GatewayDataProtos;
+import com.digirise.proto.CommonStructuresProto;
+import com.digirise.proto.GatewayDataProto;
 import com.digirise.sai.commons.helper.DeviceReading;
 import com.digirise.sai.commons.helper.ReadingType;
 import com.digirise.sai.commons.readings.DeviceData;
@@ -15,6 +15,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 /**
+ * DevicesReadingsFromGatewaySerializer class is used to serialize the gateway data readings.
  * Created by IntelliJ IDEA.
  * Date: 2020-04-24
  * Author: shrinkhlak
@@ -24,11 +25,11 @@ import java.util.List;
 public class DevicesReadingsFromGatewaySerializer {
     private static final Logger s_logger = LoggerFactory.getLogger(DevicesReadingsFromGatewaySerializer.class);
 
-    public GatewayDataProtos.DevicesReadingsFromGateway serializeDevicesData(DeviceReadingsFromGateway devicesReadingsFromGateway){
+    public GatewayDataProto.DevicesReadingsFromGateway serializeDevicesData(DeviceReadingsFromGateway devicesReadingsFromGateway){
         List<DeviceData> devicesData = devicesReadingsFromGateway.getDeviceDataList();
         s_logger.info("Serializing gatewayReadings ... connected number of devices {}", devicesData.size());
-        GatewayDataProtos.DevicesReadingsFromGateway.Builder devicesReadingsFromGatewayProto =
-                GatewayDataProtos.DevicesReadingsFromGateway.newBuilder();
+        GatewayDataProto.DevicesReadingsFromGateway.Builder devicesReadingsFromGatewayProto =
+                GatewayDataProto.DevicesReadingsFromGateway.newBuilder();
         Timestamp timestamp = devicesReadingsFromGateway.getGatewayTimestamp();
         DateTimeFormatter formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
         String timestampAsString = formatter.format(timestamp.toLocalDateTime());
@@ -42,9 +43,9 @@ public class DevicesReadingsFromGatewaySerializer {
         return devicesReadingsFromGatewayProto.build();
     }
 
-    private GatewayDataProtos.DeviceData serializeDeviceData(DeviceData deviceDataToSend) {
+    private GatewayDataProto.DeviceData serializeDeviceData(DeviceData deviceDataToSend) {
         s_logger.info("Serializing device data ...");
-        GatewayDataProtos.DeviceData.Builder deviceDataBuilder = GatewayDataProtos.DeviceData.newBuilder();
+        GatewayDataProto.DeviceData.Builder deviceDataBuilder = GatewayDataProto.DeviceData.newBuilder();
         deviceDataBuilder.setDeviceName(deviceDataToSend.getDeviceName());
         s_logger.info("building protobuf for device id {}.", deviceDataBuilder.getDeviceName());
         if (deviceDataToSend.getDeviceReadings() != null && deviceDataToSend.getDeviceReadings().size() > 0) {
@@ -54,13 +55,13 @@ public class DevicesReadingsFromGatewaySerializer {
         }
 
         for (DeviceReading deviceReading : deviceDataToSend.getDeviceReadings()) {
-            CommnStructuresProtos.ReadingType readingType = null;
+            CommonStructuresProto.ReadingType readingType = null;
             if (deviceReading.getReadingType() == ReadingType.SENSOR_CURRENT_VALUE)
-                readingType = CommnStructuresProtos.ReadingType.SENSOR_CURRENT_VALUE;
+                readingType = CommonStructuresProto.ReadingType.SENSOR_CURRENT_VALUE;
             else if (deviceReading.getReadingType() == ReadingType.SENSOR_OTHER_VALUE)
-                readingType = CommnStructuresProtos.ReadingType.SENSOR_OTHER_VALUE;
+                readingType = CommonStructuresProto.ReadingType.SENSOR_OTHER_VALUE;
             String value = deviceReading.getValue();
-            CommnStructuresProtos.DeviceReadings.Builder readings = CommnStructuresProtos.DeviceReadings.newBuilder();
+            CommonStructuresProto.DeviceReadings.Builder readings = CommonStructuresProto.DeviceReadings.newBuilder();
             readings.setReadingType(readingType);
             readings.setValue(value);
             deviceDataBuilder.addAllReadingsFromDevice(readings.build());

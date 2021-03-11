@@ -2,5 +2,6 @@ FROM openjdk:11
 MAINTAINER Digirise.com
 ARG JAR_FILE=target/sai-data-processing-*.jar
 COPY ${JAR_FILE} sai-data-processing-server.jar
+ENV spring.config.location classpath:application.properties,/opt/dataprocessor.properties
 ENTRYPOINT ["java","-jar","/sai-data-processing-server.jar"]
 EXPOSE 9082

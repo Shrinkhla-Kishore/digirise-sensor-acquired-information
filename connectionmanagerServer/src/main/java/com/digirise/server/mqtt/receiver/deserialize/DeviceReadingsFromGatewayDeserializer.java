@@ -1,7 +1,7 @@
 package com.digirise.server.mqtt.receiver.deserialize;
 
-import com.digirise.proto.CommnStructuresProtos;
-import com.digirise.proto.GatewayDataProtos;
+import com.digirise.proto.CommonStructuresProto;
+import com.digirise.proto.GatewayDataProto;
 import com.digirise.sai.commons.helper.DeviceReading;
 import com.digirise.sai.commons.helper.ReadingType;
 import com.digirise.sai.commons.readings.DeviceData;
@@ -15,6 +15,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
+ * DeviceReadingsFromGatewayDeserializer class deserializes the message received on the
+ * gateway data topic.
  * Created by IntelliJ IDEA.
  * Date: 2020-04-27
  * Author: shrinkhlak
@@ -23,7 +25,7 @@ import java.util.List;
 @Component
 public class DeviceReadingsFromGatewayDeserializer {
     public DeviceReadingsFromGateway deserializeDeviceReadingsFromGateway(
-            GatewayDataProtos.DevicesReadingsFromGateway deviceReadingsProtobuf) {
+            GatewayDataProto.DevicesReadingsFromGateway deviceReadingsProtobuf) {
         DeviceReadingsFromGateway deviceReadingsFromGateway = new DeviceReadingsFromGateway();
         List<DeviceData> deviceDataList = new ArrayList<>();
 
@@ -33,15 +35,15 @@ public class DeviceReadingsFromGatewayDeserializer {
         deviceReadingsFromGateway.setGatewayName(deviceReadingsProtobuf.getGatewayName());
         deviceReadingsFromGateway.setCustomerName(deviceReadingsProtobuf.getCustomerName());
 
-        for (GatewayDataProtos.DeviceData deviceDataProtobuf : deviceReadingsProtobuf.getDeviceDataList()) {
+        for (GatewayDataProto.DeviceData deviceDataProtobuf : deviceReadingsProtobuf.getDeviceDataList()) {
             DeviceData deviceData = new DeviceData();
             deviceData.setDeviceName(deviceDataProtobuf.getDeviceName());
             List<DeviceReading> readingList = new ArrayList<>();
-            for (CommnStructuresProtos.DeviceReadings readingsProtobuf : deviceDataProtobuf.getAllReadingsFromDeviceList()) {
+            for (CommonStructuresProto.DeviceReadings readingsProtobuf : deviceDataProtobuf.getAllReadingsFromDeviceList()) {
                 DeviceReading reading = new DeviceReading();
-                if (readingsProtobuf.getReadingType() == CommnStructuresProtos.ReadingType.SENSOR_CURRENT_VALUE)
+                if (readingsProtobuf.getReadingType() == CommonStructuresProto.ReadingType.SENSOR_CURRENT_VALUE)
                     reading.setReadingType(ReadingType.SENSOR_CURRENT_VALUE);
-                else if (readingsProtobuf.getReadingType() == CommnStructuresProtos.ReadingType.SENSOR_OTHER_VALUE)
+                else if (readingsProtobuf.getReadingType() == CommonStructuresProto.ReadingType.SENSOR_OTHER_VALUE)
                     reading.setReadingType(ReadingType.SENSOR_OTHER_VALUE);
                 reading.setValue(readingsProtobuf.getValue());
                 readingList.add(reading);

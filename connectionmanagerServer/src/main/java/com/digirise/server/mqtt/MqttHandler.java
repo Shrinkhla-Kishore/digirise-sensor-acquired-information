@@ -17,6 +17,10 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * MqttHandler class sets up and monitors the mqtt connection.
+ * If the connection to broker is lost it attempts to re-connect periodically every 3 seconds.
+ */
 @Component
 public class MqttHandler implements Runnable{
     public static final Logger s_logger = LoggerFactory.getLogger(MqttHandler.class);
@@ -70,7 +74,6 @@ public class MqttHandler implements Runnable{
                 subscriber.subscribeDeviceDataTopic();
                 subscriberResponse.setMqttClient(mqttClient);
             } catch (MqttException e) {
-                destroy();
                 s_logger.warn("Error connecting to mqtt broker {}", s_mqttBroker);
             }
         }

@@ -1,7 +1,7 @@
 package com.digirise.gateway.mqtt.sender.serialization;
 
-import com.digirise.proto.CommnStructuresProtos;
-import com.digirise.proto.GatewayDiscoveryProtos;
+import com.digirise.proto.CommonStructuresProto;
+import com.digirise.proto.GatewayDiscoveryProto;
 import com.digirise.sai.commons.discovery.DeviceInfo;
 import com.digirise.sai.commons.discovery.GatewayDiscovery;
 import com.digirise.sai.commons.helper.DeviceType;
@@ -17,6 +17,8 @@ import java.util.List;
 
 
 /**
+ * GatewayDiscoverySerializer is used to serialize the gateway discovery message before it gets
+ * sent to the backend server.
  * Created by IntelliJ IDEA.
  * Date: 2020-05-07
  * Author: shrinkhlak
@@ -26,8 +28,8 @@ import java.util.List;
 public class GatewayDiscoverySerializer {
     public static final Logger s_logger = LoggerFactory.getLogger(GatewayDiscoverySerializer.class);
 
-    public GatewayDiscoveryProtos.GatewayDiscovery serializeGatewayDiscovery(GatewayDiscovery gatewayDiscovery){
-        GatewayDiscoveryProtos.GatewayDiscovery.Builder gatewayDiscoveryProto = GatewayDiscoveryProtos.GatewayDiscovery.newBuilder();
+    public GatewayDiscoveryProto.GatewayDiscovery serializeGatewayDiscovery(GatewayDiscovery gatewayDiscovery){
+        GatewayDiscoveryProto.GatewayDiscovery.Builder gatewayDiscoveryProto = GatewayDiscoveryProto.GatewayDiscovery.newBuilder();
         gatewayDiscoveryProto.setGatewayName(gatewayDiscovery.getGatewayName());
         gatewayDiscoveryProto.setCustomerName(gatewayDiscovery.getCustomerName());
         gatewayDiscoveryProto.setCustomerId(gatewayDiscovery.getCustomerId());
@@ -38,17 +40,17 @@ public class GatewayDiscoverySerializer {
         String timestampAsString = formatter.format(timestamp.toLocalDateTime());
         gatewayDiscoveryProto.setTimestamp(timestampAsString);
 
-        List<GatewayDiscoveryProtos.DeviceInfo> devicesInfo = new ArrayList<>();
+        List<GatewayDiscoveryProto.DeviceInfo> devicesInfo = new ArrayList<>();
         if (gatewayDiscovery.getDeviceIds() != null){
             for (DeviceInfo deviceInfo : gatewayDiscovery.getDeviceIds()) {
-                GatewayDiscoveryProtos.DeviceInfo.Builder deviceInfoProto = GatewayDiscoveryProtos.DeviceInfo.newBuilder();
+                GatewayDiscoveryProto.DeviceInfo.Builder deviceInfoProto = GatewayDiscoveryProto.DeviceInfo.newBuilder();
                 deviceInfoProto.setDeviceName(deviceInfo.getDeviceName());
                 if (deviceInfo.getDeviceType() == DeviceType.MOTION_SENSOR)
-                    deviceInfoProto.setDeviceType(CommnStructuresProtos.DeviceType.MOTION_SENSOR);
+                    deviceInfoProto.setDeviceType(CommonStructuresProto.DeviceType.MOTION_SENSOR);
                 else if (deviceInfo.getDeviceType() == DeviceType.HUMIDITY_SENSOR)
-                    deviceInfoProto.setDeviceType(CommnStructuresProtos.DeviceType.HUMIDITY_SENSOR);
+                    deviceInfoProto.setDeviceType(CommonStructuresProto.DeviceType.HUMIDITY_SENSOR);
                 else if (deviceInfo.getDeviceType() == DeviceType.TEMPERATURE_SENSOR)
-                    deviceInfoProto.setDeviceType(CommnStructuresProtos.DeviceType.TEMPERATURE_SENSOR);
+                    deviceInfoProto.setDeviceType(CommonStructuresProto.DeviceType.TEMPERATURE_SENSOR);
                 devicesInfo.add(deviceInfoProto.build());
             }
         }

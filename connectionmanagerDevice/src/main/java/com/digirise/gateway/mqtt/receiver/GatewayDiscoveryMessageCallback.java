@@ -1,8 +1,8 @@
 package com.digirise.gateway.mqtt.receiver;
 
 import com.digirise.gateway.ApplicationContextHandler;
-import com.digirise.gateway.mqtt.receiver.deserialization.DeviceReadingsResponseDeserializer;
-import com.digirise.proto.CommnStructuresProtos;
+import com.digirise.proto.CommonStructuresProto;
+import com.digirise.sai.commons.deserializer.DeviceReadingsResponseDeserializer;
 import com.digirise.sai.commons.helper.DeviceReadingsResponse;
 import org.eclipse.paho.client.mqttv3.IMqttMessageListener;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
@@ -15,8 +15,15 @@ import java.io.ObjectInputStream;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+/** GatewayDiscoveryMessageCallback is used to handle the response to the Gateway discovery message.
+ * On receiving a response it also notifies the PublisherMessageResponsesHandler bean.
+ * Created by IntelliJ IDEA.
+ * Author: shrinkhlak
+ */
+
 public class GatewayDiscoveryMessageCallback implements IMqttMessageListener {
     private static final Logger s_logger = LoggerFactory.getLogger(GatewayDiscoveryMessageCallback.class);
+    // TODO: Remove the DeviceReadingsResponseDeserializer varaible and the constructor setting this variable's value
     private DeviceReadingsResponseDeserializer deviceReadingsResponseDeserializer;
     private UUID uuid;
     private AtomicBoolean responseReceived = new AtomicBoolean(false);
@@ -37,7 +44,7 @@ public class GatewayDiscoveryMessageCallback implements IMqttMessageListener {
         s_logger.debug("deviceReadingsResponseDeserializer1 is {}", deviceReadingsResponseDeserializer1);
         ByteArrayInputStream bis = new ByteArrayInputStream(mqttMessage.getPayload());
         ObjectInput in = new ObjectInputStream(bis);
-        CommnStructuresProtos.DeviceReadingsResponse responseProto = (CommnStructuresProtos.DeviceReadingsResponse) in.readObject();
+        CommonStructuresProto.DeviceReadingsResponse responseProto = (CommonStructuresProto.DeviceReadingsResponse) in.readObject();
         DeviceReadingsResponse response = deviceReadingsResponseDeserializer1.deserializeResponseBetweenServers(responseProto);
         s_logger.info("response is {} and  received is {}", response.toString(), response.getResponseStatus().toString());
         PublisherMessageResponsesHandler publisherMessageResponsesHandler = ApplicationContextHandler.getBean(PublisherMessageResponsesHandler.class);

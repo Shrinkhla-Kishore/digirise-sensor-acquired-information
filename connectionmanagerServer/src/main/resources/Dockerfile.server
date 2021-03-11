@@ -2,5 +2,6 @@ FROM openjdk:11
 MAINTAINER Digirise.com
 ARG JAR_FILE=target/sai-server-spring-boot-*.jar
 COPY ${JAR_FILE} sai-server-spring-boot.jar
+ENV spring.config.location classpath:application.properties,/opt/server.properties
 ENTRYPOINT ["java","-jar","/sai-server-spring-boot.jar"]
 EXPOSE 9081

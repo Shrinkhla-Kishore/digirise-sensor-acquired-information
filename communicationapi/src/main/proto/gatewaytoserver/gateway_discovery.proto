@@ -2,7 +2,9 @@ syntax = "proto3";
 
 package com.digirise.proto;
 
-option java_outer_classname = "GatewayDiscoveryProtos";
+option java_outer_classname = "GatewayDiscoveryProto";
+
+// import public "src/main/proto/common_structures.proto";
 import public "common_structures.proto";
 
 message DeviceInfo {

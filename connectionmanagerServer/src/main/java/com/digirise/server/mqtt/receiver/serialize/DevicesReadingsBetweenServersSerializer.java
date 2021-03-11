@@ -1,7 +1,7 @@
 package com.digirise.server.mqtt.receiver.serialize;
 
-import com.digirise.proto.CommnStructuresProtos;
-import com.digirise.proto.GatewayDataForDpProtos;
+import com.digirise.proto.CommonStructuresProto;
+import com.digirise.proto.GatewayDataForDpProto;
 import com.digirise.sai.commons.helper.DeviceReading;
 import com.digirise.sai.commons.helper.ReadingType;
 import com.digirise.sai.commons.servercommunication.DeviceDataBetweenServers;
@@ -13,6 +13,8 @@ import org.springframework.stereotype.Component;
 import java.time.format.DateTimeFormatter;
 
 /**
+ * DevicesReadingsBetweenServersSerializer class serializes gateway data readings to
+ * be sent to Data processing application.
  * Created by IntelliJ IDEA.
  * Date: 2020-04-24
  * Author: shrinkhlak
@@ -22,11 +24,11 @@ import java.time.format.DateTimeFormatter;
 public class DevicesReadingsBetweenServersSerializer {
     private static final Logger s_logger = LoggerFactory.getLogger(DevicesReadingsBetweenServersSerializer.class);
 
-    public GatewayDataForDpProtos.DevicesReadingsBetweenServers serialize(DeviceReadingsBetweenServers deviceReadingsBetweenServers){
-        s_logger.info("Serializing gatewayReadings to be sent to Data processing application ... connected number of devices {}",
+    public GatewayDataForDpProto.DevicesReadingsBetweenServers serialize(DeviceReadingsBetweenServers deviceReadingsBetweenServers){
+        s_logger.info("Serializing gatewayReadings to be sent to Data processing application ...data for {} devices",
                 deviceReadingsBetweenServers.getDeviceDataList().size());
-        GatewayDataForDpProtos.DevicesReadingsBetweenServers.Builder devicesReadingsBetweenServersProto =
-                GatewayDataForDpProtos.DevicesReadingsBetweenServers.newBuilder();
+        GatewayDataForDpProto.DevicesReadingsBetweenServers.Builder devicesReadingsBetweenServersProto =
+                GatewayDataForDpProto.DevicesReadingsBetweenServers.newBuilder();
         DateTimeFormatter formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
         String timestampAsString = formatter.format(deviceReadingsBetweenServers.getGatewayTimestamp().toLocalDateTime());
         devicesReadingsBetweenServersProto.setGatewayTimestamp(timestampAsString);
@@ -36,24 +38,24 @@ public class DevicesReadingsBetweenServersSerializer {
         return devicesReadingsBetweenServersProto.build();
     }
 
-    private GatewayDataForDpProtos.DeviceDataBetweenServers serializeDeviceData(DeviceDataBetweenServers deviceDataToSend) {
+    private GatewayDataForDpProto.DeviceDataBetweenServers serializeDeviceData(DeviceDataBetweenServers deviceDataToSend) {
         s_logger.info("Serializing device data to be sent to DP ...");
-        GatewayDataForDpProtos.DeviceDataBetweenServers.Builder deviceDataBuilder = GatewayDataForDpProtos.DeviceDataBetweenServers.newBuilder();
+        GatewayDataForDpProto.DeviceDataBetweenServers.Builder deviceDataBuilder = GatewayDataForDpProto.DeviceDataBetweenServers.newBuilder();
         deviceDataBuilder.setDeviceId(deviceDataToSend.getDeviceId());
-        s_logger.info("building protobuf for device id {}.", deviceDataBuilder.getDeviceId());
+        s_logger.info("building protobuf for sensor id {}.", deviceDataBuilder.getDeviceId());
         if (deviceDataToSend.getDeviceReadings() != null && deviceDataToSend.getDeviceReadings().size() > 0) {
             s_logger.info("Size of device readings is {}", deviceDataToSend.getDeviceReadings().size());
         } else {
             s_logger.info("The device does not contain any device readings :(");
         }
         for (DeviceReading deviceReading : deviceDataToSend.getDeviceReadings()) {
-            CommnStructuresProtos.ReadingType readingType = null;
+            CommonStructuresProto.ReadingType readingType = null;
             if (deviceReading.getReadingType() == ReadingType.SENSOR_CURRENT_VALUE)
-                readingType = CommnStructuresProtos.ReadingType.SENSOR_CURRENT_VALUE;
+                readingType = CommonStructuresProto.ReadingType.SENSOR_CURRENT_VALUE;
             else if (deviceReading.getReadingType() == ReadingType.SENSOR_OTHER_VALUE)
-                readingType = CommnStructuresProtos.ReadingType.SENSOR_OTHER_VALUE;
+                readingType = CommonStructuresProto.ReadingType.SENSOR_OTHER_VALUE;
             String value = deviceReading.getValue();
-            CommnStructuresProtos.DeviceReadings.Builder readings = CommnStructuresProtos.DeviceReadings.newBuilder();
+            CommonStructuresProto.DeviceReadings.Builder readings = CommonStructuresProto.DeviceReadings.newBuilder();
             readings.setReadingType(readingType);
             readings.setValue(value);
             readings.setUnit(deviceReading.getUnit());

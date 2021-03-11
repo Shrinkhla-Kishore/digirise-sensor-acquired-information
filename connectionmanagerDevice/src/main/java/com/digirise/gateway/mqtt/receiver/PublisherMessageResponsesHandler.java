@@ -1,7 +1,7 @@
 package com.digirise.gateway.mqtt.receiver;
 
 import com.digirise.gateway.mqtt.sender.MessagePublisher;
-import com.digirise.proto.GatewayDataProtos;
+import com.digirise.proto.GatewayDataProto;
 import com.digirise.sai.commons.readings.DeviceReadingsFromGateway;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.slf4j.Logger;
@@ -19,6 +19,11 @@ import java.util.UUID;
 import java.util.concurrent.*;
 
 /**
+ * PublisherMessageResponsesHandler is used to track whether responses for GatewayDiscovery message
+ * and the gateway data messages are received or not.
+ * It maintains a map of gateway data messages that have been dispatched but the responses are awaited.
+ * If the responses for the messages do not arrive before a timeout value (TIME_TO_WAIT_SECONDS) then
+ * the message is re-sent.
  * Created by IntelliJ IDEA.
  * Date: 2020-06-14
  * Author: shrinkhlak
@@ -61,7 +66,7 @@ public class PublisherMessageResponsesHandler implements Runnable {
                     s_logger.warn("The request response is not received for UUID {}, re-trying", entry.getKey());
                     DeviceReadingsFromGateway deviceReadingsFromGateway = entry.getValue();
                     deviceReadingsFromGateway.setGatewayTimestamp(currentTimestamp);
-                    GatewayDataProtos.DevicesReadingsFromGateway gatewayReadings = messagePublisher.serializeDeviceReadingsFromGateway(deviceReadingsFromGateway);
+                    GatewayDataProto.DevicesReadingsFromGateway gatewayReadings = messagePublisher.serializeDeviceReadingsFromGateway(deviceReadingsFromGateway);
                     messagePublisher.publishInformation(gatewayReadings, messagePublisher.createAlarmTopic(entry.getKey()));
                     deviceDataResponseMap.put(entry.getKey(), deviceReadingsFromGateway);
                 }

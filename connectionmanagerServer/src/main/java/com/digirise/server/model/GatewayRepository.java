@@ -17,4 +17,7 @@ import java.util.stream.Stream;
 public interface GatewayRepository extends CrudRepository<Gateway, Long> {
     @Query("select gw from Gateway gw where gw.name = :name and gw.customer = :customer")
     public Stream<Gateway> findGatewayByName(@Param("name") String name, @Param("customer") Customer customer);
+
+    @Query("select gw from Gateway gw where gw.customer = :customer")
+    public Stream<Gateway> findAllGatewayForCustomerId(@Param("customer") Customer customer);
 }

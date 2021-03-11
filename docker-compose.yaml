@@ -1,0 +1,74 @@
+---
+version: "3.6"
+
+services:
+  dataprocessor:
+    image: dataprocessor
+    restart: always
+    container_name: "dataprocessor-local"
+    ports:
+      - "9082:9082"
+      - "9090:9090" 
+    volumes:
+      - ./dataProcessorServer/dataprocessor.properties:/opt/dataprocessor.properties
+    environment:
+      spring.config.location: classpath:application.properties,/opt/dataprocessor.properties
+    extra_hosts:
+      connmgr.server.backend: 192.168.1.81
+    depends_on:
+      - influxdb
+  influxdb:
+    image: influxdb
+    restart: always
+    container_name: "influxdb-local"
+    ports:
+      - "8086:8086"
+    volumes:
+      - ../../influxdb_data:/var/lib/influxdb:z
+
+  server:
+    image: server
+    restart: always
+    container_name: "server-local"
+    ports:
+      - "9081:9081"
+      - "9091:9091"
+    volumes:
+      - ./connectionmanagerServer/server.properties:/opt/server.properties
+    environment:
+      spring.config.location: classpath:application.properties,/opt/server.properties
+    depends_on:
+      - mysql
+  mysql:
+    image: mysql
+    restart: always
+    container_name: "mysql-local"
+    ports:
+      - "3306:3306"
+    environment:
+        MYSQL_ROOT_PASSWORD: root
+    volumes:
+      - ../../mysql_data:/var/lib/mysql:z
+  
+#  eclipse-mosquitto:
+#    image: eclipse-mosquitto
+#    restart: unless-stopped
+#    container_name: "mosquitto-local"
+#    ports:
+#      - "8883:8883"
+##      - "8884:8884"
+##    copy:
+##      - ../../mosquitto/configs/mosquitto.conf:/mosquitto/config/mosquitto.conf
+#    volumes:
+#      - ../../mosquitto/data:/mosquitto/data
+#      - ../../mosquitto/logs:/mosquitto/logs
+#      - /mosquitto/config/:/home/shrinkhla/mosquitto/configs/
+
+volumes:
+  mosquitto-data:
+          external: true 
+  mosquitto-logs:
+          external: true 
+  mosquitto-conf:
+          external: true 
+
