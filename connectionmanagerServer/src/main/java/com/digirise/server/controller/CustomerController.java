@@ -27,11 +27,36 @@ public class CustomerController {
 
     @PostMapping(path = "/create")
     public ResponseEntity<Void> createCustomer(@RequestBody CustomerDTO customerDTO) {
+        ResponseEntity<Void> responseEntity;
         if (customerDTO != null) {
             s_logger.info("Received customer with name {}, {}, {}", customerDTO.getCustomerName(), customerDTO.getBillingAddress(), customerDTO.getLocation());
-            customerInfoService.createCustomer(customerDTO);
+            boolean status = customerInfoService.createCustomer(customerDTO);
+            if (status == true)
+                responseEntity = new ResponseEntity<>(HttpStatus.OK);
+            else
+                responseEntity = new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        } else
+            responseEntity = new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+
+        return responseEntity;
+    }
+
+    @PostMapping(path = "/update")
+    public ResponseEntity<Void> updateCustomer(@RequestBody CustomerDTO customerDTO) {
+        ResponseEntity<Void> responseEntity;
+        if (customerDTO != null && customerDTO.getCustomerId() != null) {
+            s_logger.info("Received customer with name {}, {}, {}", customerDTO.getCustomerName(), customerDTO.getBillingAddress(), customerDTO.getLocation());
+            boolean status = customerInfoService.updateCustomer(customerDTO);
+            if (status == true)
+                responseEntity = new ResponseEntity<>(HttpStatus.OK);
+            else {
+                s_logger.warn("No customer found with customerId {}", customerDTO.getCustomerId());
+                responseEntity = new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+            }
+        } else {
+            s_logger.warn("Bad request received, the request object or the customerId is null");
+            responseEntity = new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
-        ResponseEntity<Void> responseEntity = new ResponseEntity<>(HttpStatus.ACCEPTED);
         return responseEntity;
     }
 
@@ -46,16 +71,5 @@ public class CustomerController {
     public ResponseEntity<List<CustomerResponseDTO>> getCustomerInfoByName(@PathVariable String customerName){
         List<CustomerResponseDTO> customerResponseDTOs = customerInfoService.getCustomerInformationByName(customerName);
         return new ResponseEntity<List<CustomerResponseDTO>>(customerResponseDTOs, HttpStatus.OK);
-    }
-
-    @PostMapping(path = "/update")
-    public ResponseEntity<Void> updateCustomer(@RequestBody CustomerDTO customerDTO) {
-        //TODO: Define update method to update an existing customer
-        if (customerDTO != null) {
-            s_logger.info("Received customer with name {}, {}, {}", customerDTO.getCustomerName(), customerDTO.getBillingAddress(), customerDTO.getLocation());
-            customerInfoService.createCustomer(customerDTO);
-        }
-        ResponseEntity<Void> responseEntity = new ResponseEntity<>(HttpStatus.ACCEPTED);
-        return responseEntity;
     }
 }

@@ -22,6 +22,7 @@ message GatewayInfo {
     string createdOn = 6;
     string lastConnectedOn = 7;
     string lastUpdatedOn = 8;
+    int32 totalNumberOfSensors = 9;
 }
 
 //gRPC service

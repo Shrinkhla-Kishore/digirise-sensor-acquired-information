@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import javax.transaction.Transactional;
 import java.util.Optional;
 import java.util.stream.Stream;
 
@@ -33,6 +34,7 @@ private static final Logger s_logger = LoggerFactory.getLogger(SensorsInformatio
     private GatewayRepository gatewayRepository;
 
     @Override
+    @Transactional
     public void getSensorsInformation(SensorsInfoProto.SensorsInfoRequest sensorsInfoRequest,
                                       StreamObserver<SensorsInfoProto.SensorsInfoResponse> sensorsInfoResponseObserver){
         //Service logic
@@ -45,18 +47,22 @@ private static final Logger s_logger = LoggerFactory.getLogger(SensorsInformatio
             sensorsStream.forEach((sensor) -> {
                 sensorInfoBuilder.setSensorId(sensor.getSensorId());
                 sensorInfoBuilder.setName(sensor.getSensorName());
-                sensorInfoBuilder.setLocation(sensor.getLocation());
-                CommonStructuresProto.DeviceType deviceType = null;
-                if (sensor.getType() == DeviceType.MOTION_SENSOR)
-                    deviceType = CommonStructuresProto.DeviceType.MOTION_SENSOR;
-                else if (sensor.getType() == DeviceType.TEMPERATURE_SENSOR)
-                    deviceType = CommonStructuresProto.DeviceType.TEMPERATURE_SENSOR;
-                else if (sensor.getType() == DeviceType.HUMIDITY_SENSOR)
-                    deviceType = CommonStructuresProto.DeviceType.HUMIDITY_SENSOR;
-                else if (sensor.getType() == DeviceType.LIGHT_SENSOR)
-                    deviceType = CommonStructuresProto.DeviceType.LIGHT_SENSOR;
-                sensorInfoBuilder.setDeviceType(deviceType);
-                sensorInfoBuilder.setCreatedOn(sensor.getCreatedOn().toString());
+                if (sensor.getLocation() != null)
+                    sensorInfoBuilder.setLocation(sensor.getLocation());
+                if (sensor.getType() != null) {
+                    CommonStructuresProto.DeviceType deviceType = null;
+                    if (sensor.getType() == DeviceType.MOTION_SENSOR)
+                        deviceType = CommonStructuresProto.DeviceType.MOTION_SENSOR;
+                    else if (sensor.getType() == DeviceType.TEMPERATURE_SENSOR)
+                        deviceType = CommonStructuresProto.DeviceType.TEMPERATURE_SENSOR;
+                    else if (sensor.getType() == DeviceType.HUMIDITY_SENSOR)
+                        deviceType = CommonStructuresProto.DeviceType.HUMIDITY_SENSOR;
+                    else if (sensor.getType() == DeviceType.LIGHT_SENSOR)
+                        deviceType = CommonStructuresProto.DeviceType.LIGHT_SENSOR;
+                    sensorInfoBuilder.setDeviceType(deviceType);
+                }
+                if (sensor.getCreatedOn() != null)
+                    sensorInfoBuilder.setCreatedOn(sensor.getCreatedOn().toString());
                 sensorsInfoRespBuilder.addSensorInfo(sensorInfoBuilder.build());
             });
         } else {

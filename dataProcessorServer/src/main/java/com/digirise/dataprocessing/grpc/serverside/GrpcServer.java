@@ -27,7 +27,7 @@ public class GrpcServer implements Runnable {
     public static final Logger s_logger = LoggerFactory.getLogger(GrpcServer.class);
     private Server grpcServer;
     @Value("${server.grpc.port}")
-    private String grpcPort;
+    private int grpcPort;
     @Autowired
     private GatewaySensorReadingsServiceImpl gatewaySensorReadingsService;
     private static ExecutorService grpcExecutor = Executors.newSingleThreadExecutor();
@@ -41,13 +41,15 @@ public class GrpcServer implements Runnable {
     @Override
     public void run() {
         try {
-            s_logger.info("Staring gRPC on port {}", grpcPort);
-            grpcServer = ServerBuilder.forPort(Integer.parseInt(grpcPort)).addService(gatewaySensorReadingsService).build();
+            s_logger.info("Staring gRPC on Port {}, GatewaySensorReadingsServiceImpl is {} ", grpcPort, gatewaySensorReadingsService);
+            grpcServer = ServerBuilder.forPort(grpcPort).addService(gatewaySensorReadingsService).build();
             grpcServer.start();
             grpcServer.awaitTermination();
             s_logger.info("gRPC server started successfully");
         } catch (IOException e) {
+            s_logger.warn(e.getMessage());
         } catch (InterruptedException e){
+            s_logger.trace(e.getMessage());
         }
     }
 }

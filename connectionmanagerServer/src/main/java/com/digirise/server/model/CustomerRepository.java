@@ -22,5 +22,5 @@ public interface CustomerRepository extends CrudRepository<Customer, Long> {
 
     //Not used - just for tests
     @Query("select cust from Customer cust where cust.customerId = :customer_id")
-    public Stream<Customer> findCustomersByIdCust(@Param("customer_id") Long customer_id);
+    public Stream<Customer> findCustomerByCustomerId(@Param("customer_id") String customer_id);
 }

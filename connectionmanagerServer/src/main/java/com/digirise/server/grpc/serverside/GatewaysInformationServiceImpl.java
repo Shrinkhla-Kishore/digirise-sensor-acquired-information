@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import javax.transaction.Transactional;
 import java.util.Optional;
 import java.util.stream.Stream;
 
@@ -31,6 +32,7 @@ public class GatewaysInformationServiceImpl extends
     private CustomerRepository customerRepository;
 
     @Override
+    @Transactional
     public void getGatewaysInformation(GatewaysInfoProto.GatewaysInfoRequest gatewayInfoRequest,
                                        StreamObserver<GatewaysInfoProto.GatewaysInfoResponse> gatewaysInfoResponseObserver){
 
@@ -46,9 +48,13 @@ public class GatewaysInformationServiceImpl extends
                 gatewayInfoBuilder.setLocation(gateway.getLocation());
                 gatewayInfoBuilder.setCoordinates(gateway.getCoordinates());
                 gatewayInfoBuilder.setDiscoveryRequired(gateway.isDiscoveryRequired());
-                gatewayInfoBuilder.setCreatedOn(gateway.getCreatedOn().toString());
-                gatewayInfoBuilder.setLastConnectedOn(gateway.getLastConnected().toString());
-                gatewayInfoBuilder.setLastUpdatedOn(gateway.getLastUpdatedOn().toString());
+                if (gateway.getCreatedOn() != null)
+                    gatewayInfoBuilder.setCreatedOn(gateway.getCreatedOn().toString());
+                if (gateway.getLastConnected() != null)
+                    gatewayInfoBuilder.setLastConnectedOn(gateway.getLastConnected().toString());
+                if (gateway.getLastUpdatedOn() != null)
+                    gatewayInfoBuilder.setLastUpdatedOn(gateway.getLastUpdatedOn().toString());
+                gatewayInfoBuilder.setTotalNumberOfSensors(gateway.getSensors().size());
                 gatewaysInfoRespBuilder.addGatewayInfo(gatewayInfoBuilder.build());
             });
         } else {

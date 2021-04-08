@@ -33,7 +33,7 @@ public class GrpcServer implements Runnable {
     private static ExecutorService grpcExecutor = Executors.newSingleThreadExecutor();
 
     @PostConstruct
-    public void setUpGrpCServer(){
+    public void setUpGrpCServer() {
         s_logger.info("Staring gRPC server for handling frontend requests on port {}", grpcPort);
         grpcExecutor.submit(this);
     }

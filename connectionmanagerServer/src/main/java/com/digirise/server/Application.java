@@ -10,7 +10,7 @@ import org.springframework.context.annotation.Configuration;
 
 @SpringBootApplication
 @Configuration
-@ComponentScan("com.digirise.server")
+@ComponentScan({"com.digirise.server", "com.digirise.sai.commons"})
 public class Application {
     private static final Logger s_logger = LoggerFactory.getLogger(Application.class);
     public static void main(String[] args) {

@@ -27,7 +27,7 @@ public class GatewayInfoService {
         if (gateway.isPresent()) {
             Gateway gateway1 = gateway.get();
             GatewayResponseDTO gatewayResponseDTO = new GatewayResponseDTO();
-            gatewayResponseDTO.setCustomerId(gateway1.getCustomer().getCustomerId());
+            gatewayResponseDTO.setCustomerId(gateway1.getCustomer().getId());
             gatewayResponseDTO.setGatewayId(gateway1.getGatewayId());
             gatewayResponseDTO.setName(gateway1.getName());
             gatewayResponseDTO.setCoordinates(gateway1.getCoordinates());

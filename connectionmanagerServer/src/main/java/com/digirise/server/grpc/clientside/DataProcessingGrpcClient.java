@@ -10,6 +10,9 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Created by IntelliJ IDEA.
@@ -27,11 +30,13 @@ public class DataProcessingGrpcClient {
     private ManagedChannel managedChannel;
 
     @PostConstruct
-    public void setUpGrpcHandler() {
+    public void setUpGrpcHandler() throws UnknownHostException {
         try {
-            s_logger.info("Starting gRPC channel");
+            InetAddress address = InetAddress.getByName(dataProcessingHost);
+            s_logger.info("Starting gRPC channel, dataProcessingHost: {}, address: {}, dataProcessingPort: {}",
+                    dataProcessingHost, address, dataProcessingPort);
             managedChannel = ManagedChannelBuilder.forAddress(dataProcessingHost, Integer.parseInt(dataProcessingPort))
-                    .usePlaintext().build();
+                    .usePlaintext().idleTimeout(10, TimeUnit.MINUTES).build();
             ConnectivityState connectivityState = managedChannel.getState(true);
             while (connectivityState == ConnectivityState.CONNECTING) {
                 Thread.currentThread().sleep(2000);
@@ -57,7 +62,21 @@ public class DataProcessingGrpcClient {
         managedChannel.shutdown();
     }
 
-    public ManagedChannel getManagedChannel() {
-        return managedChannel;
+    public ManagedChannel getManagedChannel() throws UnknownHostException {
+        while (true) {
+            if (managedChannel != null) {
+                ConnectivityState state = managedChannel.getState(true);
+                s_logger.trace("ManagedChannel is in state {}", state.name());
+                if (state == ConnectivityState.IDLE || state == ConnectivityState.READY) {
+                    return managedChannel;
+                } else {
+                    stopGrpcHandler();
+                    setUpGrpcHandler();
+                }
+            } else {
+                s_logger.trace("ManagedChannel is null");
+                setUpGrpcHandler();
+            }
+        }
     }
 }

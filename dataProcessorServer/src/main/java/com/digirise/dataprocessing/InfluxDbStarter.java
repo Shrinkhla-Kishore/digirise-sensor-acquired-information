@@ -31,10 +31,6 @@ public class InfluxDbStarter {
     @Value("${influxdb.loglevel}")
     private String logLevel;
     private String retentionPolicy;
-//    @Value("${spring.influxdb.username}")
-//    private String username;
-//    @Value("${spring.influxdb.password}")
-//    private String password;
 
     @PostConstruct
     public void connectInfluxDb(){

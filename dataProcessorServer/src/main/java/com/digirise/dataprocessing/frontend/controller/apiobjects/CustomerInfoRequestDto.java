@@ -9,7 +9,7 @@ package com.digirise.dataprocessing.frontend.controller.apiobjects;
  */
 public class CustomerInfoRequestDto {
     private boolean allCustomers;
-    private long customerId;
+    private String customerId;
 
     public boolean isAllCustomers() {
         return allCustomers;
@@ -19,11 +19,11 @@ public class CustomerInfoRequestDto {
         this.allCustomers = allCustomers;
     }
 
-    public long getCustomerId() {
+    public String getCustomerId() {
         return customerId;
     }
 
-    public void setCustomerId(long customerId) {
+    public void setCustomerId(String customerId) {
         this.customerId = customerId;
     }
 }

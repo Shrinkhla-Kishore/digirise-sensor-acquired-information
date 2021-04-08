@@ -65,7 +65,7 @@ public class MqttConnectionManager {
             s_logger.info("Starting to publish alarms");
             while (true) {
                 publishAlarm();
-                Thread.sleep(1000); //should be 2000
+                Thread.sleep(5000); //should be 2000
             }
         }catch (MqttException e) {
             s_logger.warn("{}", e.getMessage());

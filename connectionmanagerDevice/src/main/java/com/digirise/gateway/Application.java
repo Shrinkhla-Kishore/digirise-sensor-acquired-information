@@ -13,7 +13,7 @@ import javax.annotation.Resource;
 
 @SpringBootApplication
 @Configuration
-@ComponentScan("com.digirise.gateway")
+@ComponentScan({"com.digirise.gateway", "com.digirise.sai.commons"})
 //@PropertySource("classpath:application.properties") Application.properties get read by default
 //@PropertySource("file:${properties.home}/gateway.properties") <read using spring.config.
 public class Application {

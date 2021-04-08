@@ -1,8 +1,11 @@
 package com.digirise.server.model;
 
+import org.springframework.context.annotation.Lazy;
+
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -30,7 +33,8 @@ public class Gateway {
     private String coordinates;
     private String location;
     @OneToMany (mappedBy = "gateway")
-    private Set<Sensor> sensors;
+    @Lazy
+    private Set<Sensor> sensors = new HashSet<>();
     private boolean discoveryRequired;
     private Date createdOn;
     private Date lastUpdatedOn;

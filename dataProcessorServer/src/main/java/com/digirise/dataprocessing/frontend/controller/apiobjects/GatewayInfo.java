@@ -15,6 +15,7 @@ public class GatewayInfo {
     private boolean discoveryRequired;
     private String createdOn;
     private String lastConnectedOn;
+    private int totalNumberOfSensors;
 
     public long getGatewayId() {
         return gatewayId;
@@ -70,5 +71,13 @@ public class GatewayInfo {
 
     public void setLastConnectedOn(String lastConnectedOn) {
         this.lastConnectedOn = lastConnectedOn;
+    }
+
+    public int getTotalNumberOfSensors() {
+        return totalNumberOfSensors;
+    }
+
+    public void setTotalNumberOfSensors(int totalNumberOfSensors) {
+        this.totalNumberOfSensors = totalNumberOfSensors;
     }
 }

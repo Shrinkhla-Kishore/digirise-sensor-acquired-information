@@ -9,7 +9,7 @@ package com.digirise.dataprocessing.frontend.controller.apiobjects;
  * Author: shrinkhlak
  */
 public class CustomerInfo {
-    private long customerId;
+    private String customerId;
     private String name;
     private String billingAddress;
     private String location;
@@ -21,11 +21,11 @@ public class CustomerInfo {
     public CustomerInfo() {
     }
 
-    public long getCustomerId() {
+    public String getCustomerId() {
         return customerId;
     }
 
-    public void setCustomerId(long customerId) {
+    public void setCustomerId(String customerId) {
         this.customerId = customerId;
     }
 

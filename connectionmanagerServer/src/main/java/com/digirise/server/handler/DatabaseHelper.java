@@ -124,7 +124,7 @@ public class DatabaseHelper {
                 s_logger.info("Gateway entity found for gateway {}", gatewayName);
                 return gatewayStream.get();
             } else
-                s_logger.warn("No gateway found with name {} for customer id {}", gatewayName, customer.get().getCustomerId());
+                s_logger.warn("No gateway found with name {} for customer id {}", gatewayName, customer.get().getId());
                 return null;
         }
         s_logger.warn("No customer found with the name {}", customerName);

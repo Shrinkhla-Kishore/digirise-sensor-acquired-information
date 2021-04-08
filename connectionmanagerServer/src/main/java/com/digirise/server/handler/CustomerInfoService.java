@@ -33,9 +33,11 @@ public class CustomerInfoService {
     private CustomerRepository customerRepository;
 
     public boolean createCustomer(CustomerDTO customerDTO) {
-        s_logger.info("Customer name once again is {}", customerDTO.getCustomerName());
+        long numberOfCustomer = customerRepository.count();
         Customer customer = new Customer();
-        customer.setName(customerDTO.getCustomerName());
+        String customerName = customerDTO.getCustomerName();
+        customer.setName(customerName);
+        customer.setCustomerId(customerName + "_" + numberOfCustomer);
         customer.setBillingAddress(customerDTO.getBillingAddress());
         customer.setLocation(customerDTO.getLocation());
         Timestamp timestamp = new Timestamp(new Date().getTime());
@@ -46,24 +48,35 @@ public class CustomerInfoService {
     }
 
     @Transactional
+    public boolean updateCustomer(CustomerDTO customerDTO) {
+        Customer customer = customerRepository.findCustomerByCustomerId(customerDTO.getCustomerId()).findFirst().get();
+        if (customer != null){
+            String customerName = customerDTO.getCustomerName();
+            if (customerName != null && customerName.length() > 0)
+                customer.setName(customerDTO.getCustomerName());
+            String billingAddress = customerDTO.getBillingAddress();
+            if (billingAddress != null && billingAddress.length() > 0)
+                customer.setBillingAddress(customerDTO.getBillingAddress());
+            String customerLocation = customerDTO.getLocation();
+            if (customerLocation != null && customerLocation.length() > 0)
+                customer.setLocation(customerDTO.getLocation());
+            Timestamp timestamp = new Timestamp(new Date().getTime());
+            customer.setUpdateDate(timestamp);
+            s_logger.info("Updated customer with customerId {}, name {}", customer.getCustomerId(), customer.getName());
+            customerRepository.save(customer);
+            return true;
+        } else {
+            s_logger.warn("No customer with customerId {} found", customerDTO.getCustomerId());
+            return false;
+        }
+
+    }
+
+    @Transactional
     public List<CustomerResponseDTO> getCustomerInformationByName(String customerName) {
         Stream<Customer> customers = customerRepository.findCustomersByName(customerName);
         List<CustomerResponseDTO> customersResponseDTO = customers.map(this::createCustomerResponseDTO)
                 .collect(Collectors.toList());
-
-//        customers.forEach(customer -> {
-//            CustomerResponseDTO customerResponseDTO = new CustomerResponseDTO();
-//            customerResponseDTO.setCustomer(customer.getCustomer());
-//            customerResponseDTO.setCustomerName(customer.getName());
-//            customerResponseDTO.setLocation(customer.getLocation());
-//            customerResponseDTO.setBillingAddress(customer.getBillingAddress());
-//            if (customer.getGateways()!= null && customer.getGateways().size() > 0) {
-//                List<Gateway>gateways = new ArrayList<>(customer.getGateways());
-//                customerResponseDTO.setGateways(gateways);
-//                customerResponseDTO.setGatewayCount(gateways.size());
-//            }
-//            customersResponseDTO.add(customerResponseDTO);
-//        });
         return customersResponseDTO;
     }
 
@@ -86,7 +99,7 @@ public class CustomerInfoService {
             for (Gateway gw : customer.getGateways()) {
                 GatewayResponseDTO gatewayResponseDTO = new GatewayResponseDTO();
                 gatewayResponseDTO.setGatewayId(gw.getGatewayId());
-                gatewayResponseDTO.setCustomerId(gw.getCustomer().getCustomerId());
+                gatewayResponseDTO.setCustomerId(gw.getCustomer().getId());
                 gatewayResponseDTO.setLocation(gw.getLocation());
                 gatewayResponseDTO.setCoordinates(gw.getCoordinates());
                 gatewayResponseDTO.setName(gw.getName());

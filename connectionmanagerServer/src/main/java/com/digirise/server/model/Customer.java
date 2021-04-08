@@ -1,8 +1,13 @@
 package com.digirise.server.model;
 
+import org.hibernate.annotations.LazyCollection;
+import org.springframework.context.annotation.Lazy;
+
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
+import java.io.Serializable;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -12,10 +17,13 @@ import java.util.Set;
  */
 
 @Entity
-public class Customer {
+public class Customer implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    private long customerId;
+    private long id;
+    @NotNull
+    //@Column(unique = true)
+    private String customerId;
     @NotNull
     //@UniqueElements
     @Column(unique = true)
@@ -25,8 +33,10 @@ public class Customer {
     private String location;
     private String billingAddress;
     private Date contractExpiryDate;
+    private Date updateDate;
     @OneToMany (mappedBy = "customer")
-    private Set<Gateway> gateways;
+    @Lazy
+    private Set<Gateway> gateways = new HashSet<>();
 
     public String getName() {
         return name;
@@ -36,11 +46,19 @@ public class Customer {
         this.name = name;
     }
 
-    public long getCustomerId() {
+    public long getId() {
+        return id;
+    }
+
+    public void setId(long id) {
+        this.id = id;
+    }
+
+    public String getCustomerId() {
         return customerId;
     }
 
-    public void setCustomerId(long customerId) {
+    public void setCustomerId(String customerId) {
         this.customerId = customerId;
     }
 
@@ -76,6 +94,14 @@ public class Customer {
         this.contractExpiryDate = contractExpiryDate;
     }
 
+    public Date getUpdateDate() {
+        return updateDate;
+    }
+
+    public void setUpdateDate(Date updateDate) {
+        this.updateDate = updateDate;
+    }
+
     public Set<Gateway> getGateways() {
         return gateways;
     }
@@ -86,9 +112,11 @@ public class Customer {
 
     public String toString() {
         StringBuilder customerAsString = new StringBuilder("Customer Id: ");
-        customerAsString.append(customerId);
+        customerAsString.append(id);
+        customerAsString.append(", CustomerId: ").append(customerId);
         customerAsString.append(", Name: ").append(name);
         customerAsString.append(", Start Date: ").append(startDate.toString());
+        customerAsString.append(", Update Date: ").append(updateDate.toString());
         customerAsString.append(", Location of installation: ").append(location);
         customerAsString.append(", Billing Address: ").append(billingAddress);
         customerAsString.append(", Contract Expiry Date: ").append(contractExpiryDate);

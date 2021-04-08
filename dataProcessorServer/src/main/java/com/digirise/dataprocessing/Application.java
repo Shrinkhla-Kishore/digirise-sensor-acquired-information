@@ -9,10 +9,12 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.scheduling.annotation.EnableAsync;
 
 @SpringBootApplication
 @Configuration
 @ComponentScan("com.digirise.dataprocessing")
+@EnableAsync
 public class Application implements CommandLineRunner {
     private static final Logger s_logger = LoggerFactory.getLogger(Application.class);
     @Autowired

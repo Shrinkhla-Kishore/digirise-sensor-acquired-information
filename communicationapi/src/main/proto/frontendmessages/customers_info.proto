@@ -6,7 +6,7 @@ option java_outer_classname = "CustomersInfoProto";
 // gRPC request
 message CustomersInfoRequest {
     bool allCustomers = 1;
-    int64 customerId = 2;
+    string customerId = 2;
 }
 
 // gRPC response
@@ -15,7 +15,7 @@ message CustomersInfoResponse {
 }
 
 message CustomerInfo {
-    int64 customerId = 1;
+    string customerId = 1;
     string name = 2;
     string billingAddress = 3;
     string location = 4;

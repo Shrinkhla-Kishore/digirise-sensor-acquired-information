@@ -10,10 +10,11 @@ import com.google.common.util.concurrent.ListenableFuture;
 import io.grpc.ConnectivityState;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import io.grpc.Status;
+import io.grpc.stub.StreamObserver;
 import org.checkerframework.checker.nullness.compatqual.NullableDecl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -38,13 +39,12 @@ import java.util.concurrent.Executors;
 public class UIGrpcRequestsHandler {
     private static final Logger s_logger = LoggerFactory.getLogger(UIGrpcRequestsHandler.class);
     private ManagedChannel managedChannel;
-    @Autowired
-    private UIGrpcRequestsHandler uiRequestsHandler;
+//    @Autowired
+//    private UIGrpcRequestsHandler uiRequestsHandler;
     @Value("${backendserver.grpc.port}")
-    private int backendServerPort;
+    private String backendServerPort;
     @Value("${backendserver.grpc.host}")
     private String backendServerHost;
- //   private String backendServerHost1 = "connmgr.server.backend";
     private ExecutorService grpcExecutorService;
 
     public UIGrpcRequestsHandler() {
@@ -55,8 +55,8 @@ public class UIGrpcRequestsHandler {
     public void setupGrpcClient() throws UnknownHostException {
         InetAddress address = InetAddress.getByName(backendServerHost);
         s_logger.info("backendServerHost: {}, address: {}, backendServerPort: {}", backendServerHost, address, backendServerPort);
-        //TODO: Remove hardcoded host IP
-        managedChannel = ManagedChannelBuilder.forAddress("192.168.1.81", backendServerPort).usePlaintext().build();
+        managedChannel = ManagedChannelBuilder.forAddress(backendServerHost, Integer.parseInt(backendServerPort))
+                .usePlaintext().build();
         ConnectivityState connectivityState = managedChannel.getState(true);
         try {
             while (connectivityState == ConnectivityState.CONNECTING) {
@@ -69,6 +69,7 @@ public class UIGrpcRequestsHandler {
             else
                 s_logger.error("Error connecting to grpc on backend server. Connectivity state {}", connectivityState.name());
         } catch (InterruptedException e) {
+            s_logger.warn("gRPC client setup interrupted");
             managedChannel.shutdown();
             connectivityState = managedChannel.getState(true);
             if (connectivityState != ConnectivityState.SHUTDOWN) {
@@ -77,9 +78,14 @@ public class UIGrpcRequestsHandler {
         }
     }
 
-    public CustomerInfoResponseDto retrieveCustomerInfo(boolean allCustomers, long customerId) {
+    public CustomerInfoResponseDto retrieveCustomerInfo(boolean allCustomers, String customerId) {
         CustomerInfoResponseDto customerInfoResponseDto = new CustomerInfoResponseDto();
-        CustomersInformationServiceGrpc.CustomersInformationServiceFutureStub stub =
+
+        CustomersInformationServiceGrpc.CustomersInformationServiceBlockingStub blockingStub =
+                CustomersInformationServiceGrpc.newBlockingStub(managedChannel);
+        CustomersInformationServiceGrpc.CustomersInformationServiceStub stub =
+                CustomersInformationServiceGrpc.newStub(managedChannel);
+        CustomersInformationServiceGrpc.CustomersInformationServiceFutureStub futureStub =
                 CustomersInformationServiceGrpc.newFutureStub(managedChannel);
         CustomersInfoProto.CustomersInfoRequest.Builder customersInfoRequestBuilder = CustomersInfoProto.CustomersInfoRequest.newBuilder();
         customersInfoRequestBuilder.setAllCustomers(allCustomers);
@@ -87,32 +93,92 @@ public class UIGrpcRequestsHandler {
         CustomersInfoProto.CustomersInfoRequest customersInfoRequest = customersInfoRequestBuilder.build();
         s_logger.info("Sending request to ConnectionManagerServer with values {}, {}",
                 customersInfoRequest.getAllCustomers(), customersInfoRequest.getCustomerId());
-        ListenableFuture<CustomersInfoProto.CustomersInfoResponse> customersInfoResponse = stub.getCustomersInformation(customersInfoRequest);
-        s_logger.info("request getCustomersInformation sent to ConnectionManagerServer");
-        Futures.addCallback(customersInfoResponse, new FutureCallback<CustomersInfoProto.CustomersInfoResponse>() {
-            @Override
-            public void onSuccess(@NullableDecl CustomersInfoProto.CustomersInfoResponse customersInfoResponse) {
-                List<CustomerInfo> customerInfoList = new ArrayList<>();
-                for (CustomersInfoProto.CustomerInfo customersInfoProto : customersInfoResponse.getCustomerInfoList()) {
-                    CustomerInfo customerInfo = new CustomerInfo();
-                    customerInfo.setCustomerId(customersInfoProto.getCustomerId());
-                    customerInfo.setName(customersInfoProto.getName());
-                    customerInfo.setBillingAddress(customersInfoProto.getBillingAddress());
-                    customerInfo.setLocation(customersInfoProto.getLocation());
-                    customerInfo.setStartDate(customersInfoProto.getStartDate());
-                    customerInfo.setContractExpiryDate(customersInfoProto.getContractExpiryDate());
-                    customerInfo.setTotalNumberOfGateways(customersInfoProto.getTotalNumberOfGateways());
-                    customerInfo.setTotalNumberOfSensors(customersInfoProto.getTotalNumberOfSensors());
-                    customerInfoList.add(customerInfo);
-                }
-                customerInfoResponseDto.setCustomerInfoList(customerInfoList);
-            }
 
-            @Override
-            public void onFailure(Throwable throwable) {
+        CustomersInfoProto.CustomersInfoResponse customersInfoResponse = blockingStub.getCustomersInformation(customersInfoRequest);
+        List<CustomerInfo> customerInfoList = new ArrayList<>();
+        for (CustomersInfoProto.CustomerInfo customersInfoProto : customersInfoResponse.getCustomerInfoList()) {
+            CustomerInfo customerInfo = new CustomerInfo();
+            s_logger.trace("Building customer info for customer with id {}, and name {}",
+                    customersInfoProto.getCustomerId(), customersInfoProto.getName());
+            customerInfo.setCustomerId(customersInfoProto.getCustomerId());
+            customerInfo.setName(customersInfoProto.getName());
+            customerInfo.setBillingAddress(customersInfoProto.getBillingAddress());
+            customerInfo.setLocation(customersInfoProto.getLocation());
+            customerInfo.setStartDate(customersInfoProto.getStartDate());
+            customerInfo.setContractExpiryDate(customersInfoProto.getContractExpiryDate());
+            customerInfo.setTotalNumberOfGateways(customersInfoProto.getTotalNumberOfGateways());
+            customerInfo.setTotalNumberOfSensors(customersInfoProto.getTotalNumberOfSensors());
+            customerInfoList.add(customerInfo);
+        }
+        customerInfoResponseDto.setCustomerInfoList(customerInfoList);
 
-            }
-        }, grpcExecutorService);
+        // USING ASYNC STUB
+//        StreamObserver<CustomersInfoProto.CustomersInfoResponse> responseObserver = new StreamObserver<CustomersInfoProto.CustomersInfoResponse>() {
+//            @Override
+//            public void onNext(CustomersInfoProto.CustomersInfoResponse customersInfoResponse) {
+//                s_logger.trace("Response received for customerInfo");
+//                List<CustomerInfo> customerInfoList = new ArrayList<>();
+//                for (CustomersInfoProto.CustomerInfo customersInfoProto : customersInfoResponse.getCustomerInfoList()) {
+//                    CustomerInfo customerInfo = new CustomerInfo();
+//                    s_logger.trace("Building customer info for customer with id {}, and name {}",
+//                            customersInfoProto.getCustomerId(), customersInfoProto.getName());
+//                    customerInfo.setCustomerId(customersInfoProto.getCustomerId());
+//                    customerInfo.setName(customersInfoProto.getName());
+//                    customerInfo.setBillingAddress(customersInfoProto.getBillingAddress());
+//                    customerInfo.setLocation(customersInfoProto.getLocation());
+//                    customerInfo.setStartDate(customersInfoProto.getStartDate());
+//                    customerInfo.setContractExpiryDate(customersInfoProto.getContractExpiryDate());
+//                    customerInfo.setTotalNumberOfGateways(customersInfoProto.getTotalNumberOfGateways());
+//                    customerInfo.setTotalNumberOfSensors(customersInfoProto.getTotalNumberOfSensors());
+//                    customerInfoList.add(customerInfo);
+//                }
+//                customerInfoResponseDto.setCustomerInfoList(customerInfoList);
+//            }
+//
+//            @Override
+//            public void onError(Throwable throwable) {
+//                s_logger.warn("Error received from backend server. {}", Status.fromThrowable(throwable));
+//            }
+//
+//            @Override
+//            public void onCompleted() {
+//                s_logger.info("Finished receiving the response. To send back the result to the client");
+//            }
+//        };
+//        stub.getCustomersInformation(customersInfoRequest, responseObserver);
+
+        //Using FUTURE STUB
+//        ListenableFuture<CustomersInfoProto.CustomersInfoResponse> customersInfoResponse = futureStub.getCustomersInformation(customersInfoRequest);
+//        s_logger.info("request getCustomersInformation sent to ConnectionManagerServer");
+//        Futures.addCallback(customersInfoResponse, new FutureCallback<CustomersInfoProto.CustomersInfoResponse>() {
+//            @Override
+//            public void onSuccess(@NullableDecl CustomersInfoProto.CustomersInfoResponse customersInfoResponse) {
+//                s_logger.trace("Response received for customerInfo");
+//                List<CustomerInfo> customerInfoList = new ArrayList<>();
+//                for (CustomersInfoProto.CustomerInfo customersInfoProto : customersInfoResponse.getCustomerInfoList()) {
+//                    CustomerInfo customerInfo = new CustomerInfo();
+//                    s_logger.trace("Building customer info for customer with id {}, and name {}",
+//                            customersInfoProto.getCustomerId(), customersInfoProto.getName());
+//                    customerInfo.setCustomerId(customersInfoProto.getCustomerId());
+//                    customerInfo.setName(customersInfoProto.getName());
+//                    customerInfo.setBillingAddress(customersInfoProto.getBillingAddress());
+//                    customerInfo.setLocation(customersInfoProto.getLocation());
+//                    customerInfo.setStartDate(customersInfoProto.getStartDate());
+//                    customerInfo.setContractExpiryDate(customersInfoProto.getContractExpiryDate());
+//                    customerInfo.setTotalNumberOfGateways(customersInfoProto.getTotalNumberOfGateways());
+//                    customerInfo.setTotalNumberOfSensors(customersInfoProto.getTotalNumberOfSensors());
+//                    customerInfoList.add(customerInfo);
+//                }
+//                customerInfoResponseDto.setCustomerInfoList(customerInfoList);
+//            }
+//
+//            @Override
+//            public void onFailure(Throwable throwable) {
+//                s_logger.trace("Failed to receive a response for customerInfo");
+//            }
+//        }, grpcExecutorService);
+
+        s_logger.trace("Returning customerInformation with {} customer info", customerInfoResponseDto.getCustomerInfoList().size());
         return customerInfoResponseDto;
     }
 
@@ -135,6 +201,7 @@ public class UIGrpcRequestsHandler {
             gatewayInfo.setLastConnectedOn(gatewayInfoProto.getLastConnectedOn());
             gatewayInfo.setCreatedOn(gatewayInfoProto.getCreatedOn());
             gatewayInfo.setDiscoveryRequired(gatewayInfoProto.getDiscoveryRequired());
+            gatewayInfo.setTotalNumberOfSensors(gatewayInfoProto.getTotalNumberOfSensors());
             gatewayInfoList.add(gatewayInfo);
         }
         gatewaysInfoResponseDto.setGatewayInfoList(gatewayInfoList);

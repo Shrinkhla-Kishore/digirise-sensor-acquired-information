@@ -1,36 +1,40 @@
 package com.digirise.server.controller;
 
+import java.util.Optional;
+
 /**
  * Created by IntelliJ IDEA.
  * Date: 2020-05-05
  * Author: shrinkhlak
  */
 public class CustomerDTO {
-    private String customerName;
-    private String billingAddress;
-    private String location;
+    private String customerId;
+    private Optional<String> customerName;
+    private Optional<String> billingAddress;
+    private Optional<String> location;
 
-    public String getCustomerName() {
-        return customerName;
+    public String getCustomerId() {
+        return customerId;
     }
 
-    public void setCustomerName(String customerName) {
-        this.customerName = customerName;
+    public String getCustomerName() {
+        if (customerName != null && customerName.isPresent())
+            return customerName.get();
+        else
+            return null;
     }
 
     public String getBillingAddress() {
-        return billingAddress;
-    }
-
-    public void setBillingAddress(String billingAddress) {
-        this.billingAddress = billingAddress;
+        if (billingAddress != null && billingAddress.isPresent())
+            return billingAddress.get();
+        else
+            return null;
     }
 
     public String getLocation() {
-        return location;
-    }
-
-    public void setLocation(String location) {
-        this.location = location;
+        if (location != null && location.isPresent())
+            return location.get();
+        else
+            return null;
     }
 }
