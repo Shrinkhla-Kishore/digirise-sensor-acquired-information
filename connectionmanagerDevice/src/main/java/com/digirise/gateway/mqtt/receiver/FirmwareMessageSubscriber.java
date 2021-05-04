@@ -19,40 +19,41 @@ public class FirmwareMessageSubscriber {
     private String clientId;
     private MqttClient mqttClient;
 
-    @PostConstruct
-    public void setupFirmwareSubscriber() {
-        try {
-            if (mqttClient == null || !mqttClient.isConnected()) {
-                clientId = "subscriber";
-                mqttClient = new MqttClient(s_mqttBroker, clientId);
-                // mqttClient.setCallback(new SubscriberCallback());
-                mqttClient.connect();
-                mqttClient.subscribe("/gateway/+/firmware", (topic, message) -> {
-                    s_logger.info("Sending response back to publisher on topic {}", topic);
-                    // Reading the client Id
-                    int lastIndex = topic.indexOf("-");
-                    String clientId = topic.substring("/device/".length(), lastIndex);
-                    String responseTopic = "/device/firmwareresponse/" + clientId;
-                    //  MqttTopic mqttTopic = mqttClient.getTopic(responseTopic);
-                    ByteArrayOutputStream byteOutputStream = new ByteArrayOutputStream();
-                    String response = "Success " + message.getId();
-                    s_logger.info("Sending response back to publisher client id {}. Response {}", clientId, response);
-                    MqttMessage messageToSend = new MqttMessage(response.getBytes());
-                    mqttClient.publish(responseTopic, messageToSend);
-                    s_logger.info("Response sent by subscriber to clientID {]", clientId);
-                });
-            }
-        } catch (MqttException e) {
-            e.printStackTrace();
-            System.exit(1);
-        }
-    }
-
-    public String getClientId() {
-        return clientId;
-    }
-
-    public MqttClient getMqttClient() {
-        return mqttClient;
-    }
+//    @PostConstruct
+//    public void setupFirmwareSubscriber() {
+//        try {
+//            s_logger.info("Connecting from here ??");
+//            if (mqttClient == null || !mqttClient.isConnected()) {
+//                clientId = "subscriber";
+//                mqttClient = new MqttClient(s_mqttBroker, clientId);
+//                // mqttClient.setCallback(new SubscriberCallback());
+//                mqttClient.connect();
+//                mqttClient.subscribe("/gateway/+/firmware", (topic, message) -> {
+//                    s_logger.info("Sending response back to publisher on topic {}", topic);
+//                    // Reading the client Id
+//                    int lastIndex = topic.indexOf("-");
+//                    String clientId = topic.substring("/device/".length(), lastIndex);
+//                    String responseTopic = "/device/firmwareresponse/" + clientId;
+//                    //  MqttTopic mqttTopic = mqttClient.getTopic(responseTopic);
+//                    ByteArrayOutputStream byteOutputStream = new ByteArrayOutputStream();
+//                    String response = "Success " + message.getId();
+//                    s_logger.info("Sending response back to publisher client id {}. Response {}", clientId, response);
+//                    MqttMessage messageToSend = new MqttMessage(response.getBytes());
+//                    mqttClient.publish(responseTopic, messageToSend);
+//                    s_logger.info("Response sent by subscriber to clientID {]", clientId);
+//                });
+//            }
+//        } catch (MqttException e) {
+//            e.printStackTrace();
+//            System.exit(1);
+//        }
+//    }
+//
+//    public String getClientId() {
+//        return clientId;
+//    }
+//
+//    public MqttClient getMqttClient() {
+//        return mqttClient;
+//    }
 }

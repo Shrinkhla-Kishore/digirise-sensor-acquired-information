@@ -4,7 +4,6 @@ package com.digirise.gateway.mqtt;
 import org.bouncycastle.asn1.ASN1InputStream;
 import org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.bouncycastle.openssl.*;
 import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
 import org.bouncycastle.openssl.jcajce.JcePEMDecryptorProviderBuilder;
 import org.slf4j.Logger;
@@ -14,10 +13,16 @@ import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManagerFactory;
-import java.io.*;
+import java.io.BufferedInputStream;
+import java.io.ByteArrayInputStream;
+import java.io.FileInputStream;
+import java.io.FileReader;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.security.*;
+import java.security.KeyFactory;
+import java.security.KeyStore;
+import java.security.PrivateKey;
+import java.security.Security;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.security.spec.PKCS8EncodedKeySpec;
@@ -58,7 +63,7 @@ public class SslUtil {
 //        return context.getSocketFactory();
 //    }
 
-    public static SSLSocketFactory getSocketFactory(final String caCrtFile,
+/*    public static SSLSocketFactory getSocketFactory(final String caCrtFile,
                                                      final String crtFile, final String keyFile, final String password)
             throws Exception {
         s_logger.info("Inside SSLSocketFactory getSocketFactory() method");
@@ -156,6 +161,6 @@ public class SslUtil {
         context.init(kmf.getKeyManagers(), tmf.getTrustManagers(), null);
 
         return context.getSocketFactory();
-    }
+    } */
 
 }

@@ -4,6 +4,7 @@ import com.digirise.server.mqtt.receiver.Subscriber;
 import com.digirise.server.mqtt.receiver.SubscriberResponse;
 import com.digirise.server.mqtt.sender.FirmwareDispatcher;
 import org.eclipse.paho.client.mqttv3.MqttClient;
+import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,6 +38,7 @@ public class MqttHandler implements Runnable{
     @Autowired
     private SubscriberResponse subscriberResponse;
     private boolean stopped = false;
+    private MqttConnectOptions options;
 
     public MqttHandler(FirmwareDispatcher firmwareDispatcher) {
        // subscriber.configureMqtt();
@@ -55,6 +57,8 @@ public class MqttHandler implements Runnable{
         try {
             mqttClientId = "serverApplication";
             mqttClient = new MqttClient(s_mqttBroker, mqttClientId);
+       //     options = new MqttConnectOptions();
+        //    options.setMqttVersion(MqttConnectOptions.MQTT_VERSION_3_1);
         } catch (MqttException e) {
             e.printStackTrace();
             System.exit(1);
@@ -75,6 +79,7 @@ public class MqttHandler implements Runnable{
                 subscriberResponse.setMqttClient(mqttClient);
             } catch (MqttException e) {
                 s_logger.warn("Error connecting to mqtt broker {}", s_mqttBroker);
+                s_logger.trace("{}", e.getStackTrace());
             }
         }
     }

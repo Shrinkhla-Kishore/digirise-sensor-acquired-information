@@ -3,9 +3,9 @@ package com.digirise.gateway.mqtt.sender;
 import com.digirise.gateway.ApplicationContextHandler;
 import com.digirise.gateway.mqtt.receiver.DataMessageCallback;
 import com.digirise.gateway.mqtt.receiver.GatewayDiscoveryMessageCallback;
+import com.digirise.gateway.mqtt.receiver.PublisherMessageResponsesHandler;
 import com.digirise.gateway.mqtt.sender.serialization.DevicesReadingsFromGatewaySerializer;
 import com.digirise.gateway.mqtt.sender.serialization.GatewayDiscoverySerializer;
-import com.digirise.gateway.mqtt.receiver.PublisherMessageResponsesHandler;
 import com.digirise.proto.GatewayDataProto;
 import com.digirise.proto.GatewayDiscoveryProto;
 import com.digirise.sai.commons.deserializer.DeviceReadingsResponseDeserializer;
@@ -14,13 +14,6 @@ import com.digirise.sai.commons.helper.DeviceReading;
 import com.digirise.sai.commons.helper.ReadingType;
 import com.digirise.sai.commons.readings.DeviceData;
 import com.digirise.sai.commons.readings.DeviceReadingsFromGateway;
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.bouncycastle.openssl.PEMDecryptorProvider;
-import org.bouncycastle.openssl.PEMEncryptedKeyPair;
-import org.bouncycastle.openssl.PEMKeyPair;
-import org.bouncycastle.openssl.PEMParser;
-import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
-import org.bouncycastle.openssl.jcajce.JcePEMDecryptorProviderBuilder;
 import org.eclipse.paho.client.mqttv3.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,16 +23,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
 import org.springframework.util.FileCopyUtils;
 
-import javax.net.ssl.KeyManagerFactory;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLSocketFactory;
-import javax.net.ssl.TrustManagerFactory;
 import java.io.*;
-import java.security.KeyPair;
-import java.security.KeyStore;
-import java.security.Security;
-import java.security.cert.CertificateFactory;
-import java.security.cert.X509Certificate;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Date;
@@ -79,12 +63,12 @@ public class MessagePublisher {
     private static final String SUFFIX_DATA_TOPIC = "/data/";
     private static final String SUFFIX_INFO_TOPIC = "/info/";
     private static final String PREFIX_TOPIC = "gateway/";
-    @Value("${ca.certificate}")
-    private Resource caCert;
-    @Value("${client.certificate}")
-    private Resource clientCert;
-    @Value("${client.key}")
-    private Resource clientKey;
+//    @Value("${ca.certificate}")
+//    private Resource caCert;
+//    @Value("${client.certificate}")
+//    private Resource clientCert;
+//    @Value("${client.key}")
+//    private Resource clientKey;
     private AtomicInteger alarmId;
     public final int qosLevel = 2;
     private MqttClient mqttClient = null;
@@ -102,10 +86,12 @@ public class MessagePublisher {
                     setConnectOptions();
                     s_logger.info("Inside step 1");
                     Thread.currentThread().sleep(5000);
-                    mqttClient.connect();
+                    mqttClient.connect(options);
                     s_logger.info("Mqtt client connected to {}", mqttBroker);
                 } catch (MqttException e) {
-                    s_logger.warn("Error connecting to mqtt broker {}", mqttBroker);
+                    s_logger.warn("Error connecting to mqtt broker :( {}", mqttBroker);
+                    s_logger.trace("{}", e.getStackTrace());
+                    e.printStackTrace();
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
@@ -250,7 +236,9 @@ public class MessagePublisher {
       //  options.setAutomaticReconnect(true);
         options.setMqttVersion(MqttConnectOptions.MQTT_VERSION_3_1);
         try {
-            options.setSocketFactory(getSocketFactory(caCert, clientCert, clientKey, ""));
+            options.setSocketFactory(SslUtilDigirise.getSocketFactory("src\\main\\resources\\certs\\ca.crt",
+                    "src\\main\\resources\\certs\\client.crt","src\\main\\resources\\certs\\client.key", ""));
+        //    options.setSocketFactory(SslUtilDigirise.getSocketFactory(caCert, clientCert, clientKey, ""));
         } catch (Exception e) {
             s_logger.error("Error in setting the socket factory");
             e.printStackTrace();
@@ -267,7 +255,7 @@ public class MessagePublisher {
     }
 
 
-    private static SSLSocketFactory getSocketFactory(final Resource caCrtFile, final Resource crtFile,
+/*    private static SSLSocketFactory getSocketFactory(final Resource caCrtFile, final Resource crtFile,
                                                      final Resource keyFile, final String password)
             throws Exception {
         Security.addProvider(new BouncyCastleProvider());
@@ -347,6 +335,6 @@ public class MessagePublisher {
         context.init(kmf.getKeyManagers(), tmf.getTrustManagers(), null);
 
         return context.getSocketFactory();
-    }
+    } */
 
 }
