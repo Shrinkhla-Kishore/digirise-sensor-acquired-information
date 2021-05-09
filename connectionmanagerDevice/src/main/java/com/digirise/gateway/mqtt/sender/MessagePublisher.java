@@ -236,8 +236,8 @@ public class MessagePublisher {
       //  options.setAutomaticReconnect(true);
         options.setMqttVersion(MqttConnectOptions.MQTT_VERSION_3_1);
         try {
-            options.setSocketFactory(SslUtilDigirise.getSocketFactory("src\\main\\resources\\certs\\ca.crt",
-                    "src\\main\\resources\\certs\\client.crt","src\\main\\resources\\certs\\client.key", ""));
+            options.setSocketFactory(SslUtilDigirise.getSocketFactory("src\\main\\resources\\client_rsa_cert\\ca.crt",
+                    "src\\main\\resources\\client_rsa_cert\\client-cert1.pem","src\\main\\resources\\client_rsa_cert\\client_working.pem", ""));
         //    options.setSocketFactory(SslUtilDigirise.getSocketFactory(caCert, clientCert, clientKey, ""));
         } catch (Exception e) {
             s_logger.error("Error in setting the socket factory");
